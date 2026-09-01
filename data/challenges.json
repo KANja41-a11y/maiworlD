@@ -1,0 +1,162 @@
+[
+  {
+    "id": 1,
+    "category": "Drawing",
+    "icon": "🎨",
+    "difficulty": "Easy",
+    "minutes": 15,
+    "xp": 15,
+    "title": "Three-Emoji Character",
+    "prompt": "Design a character inspired by these three things: a strawberry, an umbrella, and the moon."
+  },
+  {
+    "id": 2,
+    "category": "Drawing",
+    "icon": "🖍️",
+    "difficulty": "Medium",
+    "minutes": 30,
+    "xp": 25,
+    "title": "Tiny Dream Room",
+    "prompt": "Draw a tiny room that represents your dream creative workspace. Add at least five meaningful objects."
+  },
+  {
+    "id": 3,
+    "category": "Writing",
+    "icon": "✍️",
+    "difficulty": "Easy",
+    "minutes": 10,
+    "xp": 15,
+    "title": "The Unexpected Letter",
+    "prompt": "Write a short story that begins with: I wasn't supposed to open that letter."
+  },
+  {
+    "id": 4,
+    "category": "Writing",
+    "icon": "📖",
+    "difficulty": "Hard",
+    "minutes": 30,
+    "xp": 35,
+    "title": "100-Word Universe",
+    "prompt": "Create a complete fictional world in exactly 100 words."
+  },
+  {
+    "id": 5,
+    "category": "Video",
+    "icon": "🎬",
+    "difficulty": "Medium",
+    "minutes": 25,
+    "xp": 25,
+    "title": "15-Second Story",
+    "prompt": "Make a 15-second video that tells a beginning, middle, and ending without using dialogue."
+  },
+  {
+    "id": 6,
+    "category": "Photography",
+    "icon": "📸",
+    "difficulty": "Easy",
+    "minutes": 20,
+    "xp": 15,
+    "title": "Ordinary, Extraordinary",
+    "prompt": "Photograph one ordinary object from three unusual angles and make it look cinematic."
+  },
+  {
+    "id": 7,
+    "category": "Coding",
+    "icon": "💻",
+    "difficulty": "Medium",
+    "minutes": 30,
+    "xp": 30,
+    "title": "Tiny Useful Tool",
+    "prompt": "Build a tiny browser tool that solves one annoying everyday problem."
+  },
+  {
+    "id": 8,
+    "category": "Music",
+    "icon": "🎵",
+    "difficulty": "Easy",
+    "minutes": 15,
+    "xp": 20,
+    "title": "Sound of a Place",
+    "prompt": "Create a short soundscape inspired by a place you love. Use at least three layers."
+  },
+  {
+    "id": 9,
+    "category": "Craft",
+    "icon": "🧵",
+    "difficulty": "Medium",
+    "minutes": 30,
+    "xp": 25,
+    "title": "Upcycle Challenge",
+    "prompt": "Turn one piece of packaging or waste into something decorative or useful."
+  },
+  {
+    "id": 10,
+    "category": "Random",
+    "icon": "🎲",
+    "difficulty": "Hard",
+    "minutes": 40,
+    "xp": 40,
+    "title": "Make It Weird",
+    "prompt": "Choose any medium and create something based on a penguin running a luxury hotel on Mars."
+  },
+  {
+    "id": 11,
+    "category": "Coding",
+    "icon": "✨",
+    "difficulty": "Hard",
+    "minutes": 45,
+    "xp": 45,
+    "title": "Generative Poster",
+    "prompt": "Create a poster where the layout changes randomly every time the page loads."
+  },
+  {
+    "id": 12,
+    "category": "Writing",
+    "icon": "💌",
+    "difficulty": "Medium",
+    "minutes": 20,
+    "xp": 25,
+    "title": "Message From Future You",
+    "prompt": "Write a message from yourself ten years in the future. What did you become proud of?"
+  },
+  {
+    "id": 13,
+    "category": "Drawing",
+    "icon": "🌙",
+    "difficulty": "Hard",
+    "minutes": 45,
+    "xp": 40,
+    "title": "Dream Creature",
+    "prompt": "Invent a creature that only appears when someone falls asleep. Give it three magical abilities."
+  },
+  {
+    "id": 14,
+    "category": "Photography",
+    "icon": "☁️",
+    "difficulty": "Medium",
+    "minutes": 25,
+    "xp": 25,
+    "title": "Color Hunt",
+    "prompt": "Choose one color and photograph five completely different things that contain it."
+  },
+  {
+    "id": 15,
+    "category": "Coding",
+    "icon": "🪄",
+    "difficulty": "Hard",
+    "minutes": 45,
+    "xp": 45,
+    "title": "Tiny Interactive Story",
+    "prompt": "Create a mini interactive story where the reader makes at least three choices."
+  },
+  {
+    "id": 16,
+    "category": "Craft",
+    "icon": "🎁",
+    "difficulty": "Easy",
+    "minutes": 20,
+    "xp": 20,
+    "title": "Mystery Box",
+    "prompt": "Design packaging for a fictional product that doesn't exist yet."
+  }
+]
