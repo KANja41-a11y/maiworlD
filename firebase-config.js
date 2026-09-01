@@ -1,17 +1,11 @@
-// Paste the web app config from Firebase Console here.
-// This file is intentionally safe to publish: Firebase web config is not a password.
-// The actual protection comes from Authentication + Realtime Database Security Rules.
-
 export const firebaseConfig = {
-  apiKey: "PASTE_YOUR_API_KEY",
-  authDomain: "PASTE_YOUR_PROJECT.firebaseapp.com",
-  databaseURL: "https://PASTE_YOUR_PROJECT-default-rtdb.firebaseio.com",
-  projectId: "PASTE_YOUR_PROJECT",
-  storageBucket: "PASTE_YOUR_PROJECT.firebasestorage.app",
-  messagingSenderId: "PASTE_YOUR_SENDER_ID",
-  appId: "PASTE_YOUR_APP_ID"
+  apiKey: "AIzaSyC2942p_-WdysI8n3u0FWLd3jvJCpKaDmQ",
+  authDomain: "maiworld-e5b64.firebaseapp.com",
+  projectId: "maiworld-e5b64",
+  storageBucket: "maiworld-e5b64.firebasestorage.app",
+  messagingSenderId: "40939829206",
+  appId: "1:40939829206:web:e0a423661b5953a979d677",
+  measurementId: "G-3ZK1517MSH"
 };
 
-export const FIREBASE_READY =
-  !firebaseConfig.apiKey.startsWith("PASTE_") &&
-  !firebaseConfig.databaseURL.includes("PASTE_");
+export const FIREBASE_READY = true;
