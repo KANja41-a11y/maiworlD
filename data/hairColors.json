@@ -1,8 +1,0 @@
-[
-  { "id": "hitam",           "name": "Hitam",           "hex": "#3A2E39" },
-  { "id": "coklat",          "name": "Coklat",          "hex": "#8B5E3C" },
-  { "id": "pirang",          "name": "Pirang",          "hex": "#F0D9A0" },
-  { "id": "pink-pastel",     "name": "Pink Pastel",     "hex": "#FFB6D1" },
-  { "id": "lavender-pastel", "name": "Lavender Pastel", "hex": "#D4C4FF" },
-  { "id": "mint-pastel",     "name": "Mint Pastel",     "hex": "#B8EFDA" }
-]

@@ -1,6 +1,0 @@
-[
-  { "id": "terang",      "name": "Terang",      "hex": "#FFDFC4" },
-  { "id": "sedang",      "name": "Sedang",      "hex": "#F1C27D" },
-  { "id": "sawo-matang", "name": "Sawo Matang", "hex": "#C68642" },
-  { "id": "gelap",       "name": "Gelap",       "hex": "#8D5524" }
-]

@@ -1,9 +1,0 @@
-[
-  { "id": "none",     "name": "Tanpa Aksesori" },
-  { "id": "kacamata", "name": "Kacamata Bulat" },
-  { "id": "pita",     "name": "Pita Lucu" },
-  { "id": "topi",     "name": "Topi Mungil" },
-  { "id": "tas",      "name": "Tas Kecil" },
-  { "id": "sayap",    "name": "Sayap Peri" },
-  { "id": "bunga",    "name": "Bunga Telinga" }
-]
