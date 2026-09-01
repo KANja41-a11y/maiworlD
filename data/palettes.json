@@ -1,0 +1,8 @@
+[
+  { "id": "pink",     "name": "Pink Permen",    "hex": "#FF9FC1" },
+  { "id": "lavender", "name": "Lavender",       "hex": "#C9B6FF" },
+  { "id": "mint",     "name": "Mint Segar",     "hex": "#A8E6CF" },
+  { "id": "sky",      "name": "Biru Langit",    "hex": "#A0D8F1" },
+  { "id": "butter",   "name": "Kuning Mentega", "hex": "#FFE29A" },
+  { "id": "peach",    "name": "Peach Manis",    "hex": "#FFC9A9" }
+]

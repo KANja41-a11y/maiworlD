@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MAIWORLD — Dunia Chibi Pixel, Main Bareng Teman</title>
+<meta name="description" content="MAIWORLD adalah dunia karakter chibi pixel: kustomisasi karaktermu, jelajahi Taman, Sekolah, dan Alun-Alun, kenalan sama teman, dan main bareng.">
+<link rel="icon" href="data:,">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Nunito:wght@400;600;700&family=Press+Start+2P&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<header class="site-header" id="siteHeader">
+  <div class="header-inner">
+    <a href="#top" class="logo">
+      <span class="logo-mark">🎀</span>
+      <span class="logo-text">MAIWORLD</span>
+    </a>
+    <nav class="main-nav" id="mainNav">
+      <a href="#kustomisasi">Karakterku</a>
+      <a href="#dunia">Dunia</a>
+      <a href="#teman">Teman</a>
+      <a href="#tentang">Tentang</a>
+    </nav>
+    <div class="header-actions">
+      <button class="music-toggle" id="musicToggle" aria-label="Putar musik" title="Putar musik santai">🎵</button>
+      <button class="nav-toggle" id="navToggle" aria-label="Buka menu" aria-expanded="false">
+        <span></span><span></span><span></span>
+      </button>
+    </div>
+  </div>
+</header>
+
+<main id="top">
+
+  <!-- HERO -->
+  <section class="hero">
+    <div class="hero-bg">
+      <img src="https://images.pexels.com/photos/14060322/pexels-photo-14060322.jpeg?auto=compress&cs=tinysrgb&w=1920" alt="" loading="eager">
+      <div class="hero-overlay"></div>
+    </div>
+    <div class="hero-content">
+      <p class="eyebrow pixel-label">✿ DUNIA CHIBI PIXEL ✿</p>
+      <h1>Ciptakan karaktermu,<br><span class="grad-text">jelajahi dunianya bareng teman.</span></h1>
+      <p class="hero-sub">MAIWORLD adalah dunia chibi pixel penuh warna — atur rambut, baju, dan aksesorimu, lalu jalan-jalan ke Taman, Sekolah, sampai Alun-Alun, kenalan dengan teman-teman yang ada di sana.</p>
+      <div class="hero-actions">
+        <a href="#kustomisasi" class="btn btn-primary">Buat Karakterku</a>
+        <a href="#dunia" class="btn btn-ghost">Masuk ke Dunia</a>
+      </div>
+    </div>
+    <div class="hero-float f1" aria-hidden="true">✿</div>
+    <div class="hero-float f2" aria-hidden="true">☁</div>
+    <div class="hero-float f3" aria-hidden="true">✿</div>
+  </section>
+
+  <!-- KUSTOMISASI -->
+  <section class="section" id="kustomisasi">
+    <div class="section-head">
+      <p class="eyebrow pixel-label">01 · KARAKTERKU</p>
+      <h2>Rakit karakter chibi-mu</h2>
+      <p class="section-desc">Semua pilihan langsung terlihat di pratinjau. Karaktermu tersimpan di perangkat ini dan bisa kamu ubah kapan saja — termasuk namanya.</p>
+    </div>
+
+    <div class="customizer-layout">
+      <div class="customizer-controls">
+        <div class="field">
+          <label>Warna Kulit</label>
+          <div class="swatch-row" id="skinPicker"></div>
+        </div>
+
+        <div class="field">
+          <label>Gaya Rambut</label>
+          <div class="option-grid" id="hairStylePicker"></div>
+        </div>
+        <div class="field">
+          <label>Warna Rambut</label>
+          <div class="swatch-row" id="hairColorPicker"></div>
+        </div>
+
+        <div class="field">
+          <label>Gaya Pakaian</label>
+          <div class="option-grid" id="clothingModePicker">
+            <button type="button" class="option-btn" data-mode="dress">👗 Dress</button>
+            <button type="button" class="option-btn" data-mode="topbottom">👕 Atasan + Celana</button>
+          </div>
+        </div>
+
+        <div class="field" id="dressColorField">
+          <label>Warna Dress</label>
+          <div class="swatch-row" id="dressColorPicker"></div>
+        </div>
+        <div class="field" id="topColorField" hidden>
+          <label>Warna Atasan</label>
+          <div class="swatch-row" id="topColorPicker"></div>
+        </div>
+        <div class="field" id="bottomColorField" hidden>
+          <label>Warna Celana</label>
+          <div class="swatch-row" id="bottomColorPicker"></div>
+        </div>
+
+        <div class="field">
+          <label>Aksesori</label>
+          <div class="option-grid option-grid--pills" id="accessoryPicker"></div>
+        </div>
+
+        <div class="field">
+          <label for="charName">Nama Karakter</label>
+          <input type="text" id="charName" placeholder="mis. Kiara" maxlength="18">
+        </div>
+        <div class="form-actions">
+          <button type="button" class="btn btn-primary" id="btnSaveChar">Simpan Karakterku</button>
+        </div>
+      </div>
+
+      <div class="customizer-preview">
+        <div class="preview-card">
+          <canvas id="previewCanvas" width="80" height="112"></canvas>
+        </div>
+        <p class="preview-name" id="previewName">Karaktermu</p>
+        <button type="button" class="btn btn-outline btn-block" id="btnInvite">💌 Undang Teman Main</button>
+        <p class="invite-hint">Bagikan link undangan — saat temanmu membukanya, karaktermu ikut muncul di dunia mereka.</p>
+      </div>
+    </div>
+
+    <div class="invite-banner" id="inviteBanner" hidden></div>
+  </section>
+
+  <!-- DUNIA -->
+  <section class="section section-alt" id="dunia">
+    <div class="section-head">
+      <p class="eyebrow pixel-label">02 · JELAJAH DUNIA</p>
+      <h2>Pilih dunia yang mau dikunjungi</h2>
+      <p class="section-desc">Gerakkan karaktermu pakai panah / WASD atau D-pad sentuh. Dekati barang-barang atau teman untuk berinteraksi.</p>
+    </div>
+
+    <div class="world-tabs" id="worldTabs"></div>
+
+    <div class="world-wrap">
+      <div class="world-stage" id="worldStage" tabindex="0">
+        <div class="world-grid" id="worldGrid"></div>
+        <div class="world-sprites" id="worldSprites"></div>
+        <div class="world-prompt" id="worldPrompt" hidden></div>
+      </div>
+
+      <div class="world-side">
+        <div class="dpad" id="dpad" aria-label="Kontrol gerak">
+          <button data-dir="up" class="dpad-btn dpad-up" aria-label="Atas">▲</button>
+          <button data-dir="left" class="dpad-btn dpad-left" aria-label="Kiri">◀</button>
+          <button data-dir="down" class="dpad-btn dpad-down" aria-label="Bawah">▼</button>
+          <button data-dir="right" class="dpad-btn dpad-right" aria-label="Kanan">▶</button>
+        </div>
+        <p class="world-hint pixel-label">PANAH / WASD</p>
+        <div class="world-legend">
+          <p><span class="legend-dot legend-grass"></span> Bisa dilewati</p>
+          <p><span class="legend-dot legend-water"></span> Tidak bisa dilewati</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- TEMAN -->
+  <section class="section" id="teman">
+    <div class="section-head">
+      <p class="eyebrow pixel-label">03 · TEMAN-TEMAN</p>
+      <h2>Kenalan sama penghuni MAIWORLD</h2>
+      <p class="section-desc">Mereka tersebar di tiga dunia — klik kartunya untuk ngobrol, atau temukan langsung sambil jalan-jalan.</p>
+    </div>
+    <div class="friend-grid" id="friendGrid"></div>
+  </section>
+
+  <!-- TENTANG -->
+  <section class="section section-alt" id="tentang">
+    <div class="section-head">
+      <p class="eyebrow pixel-label">04 · TENTANG</p>
+      <h2>Tentang MAIWORLD</h2>
+    </div>
+    <div class="about-grid">
+      <div class="about-text">
+        <p>MAIWORLD adalah situs statis — dibangun murni dengan HTML, CSS, dan JavaScript. Semua karakter, dunia, teman, dan pilihan kustomisasi disimpan sebagai file JSON supaya gampang dikembangkan tanpa menyentuh kode inti.</p>
+        <p>Karakter chibi di sini digambar langsung lewat kode dari data grid pixel (bukan aset gambar orang lain), jadi bebas dipakai dan diubah-ubah. Karena situs statis tanpa server, fitur "teman online" berjalan lewat data yang sudah disiapkan plus link undangan yang bisa kamu bagikan — bukan koneksi real-time sungguhan antar banyak pengguna sekaligus. Musik latarnya pun dibuat langsung lewat kode (Web Audio API), bukan file lagu, supaya selalu ringan dan bebas hak cipta.</p>
+        <ul class="feature-list">
+          <li>Kustomisasi lengkap: kulit, rambut (5 gaya × 6 warna), dress atau atasan+celana terpisah, 7 aksesori</li>
+          <li>Nama karakter bisa diganti kapan saja</li>
+          <li>3 dunia yang bisa dijelajahi: Taman, Sekolah, Alun-Alun</li>
+          <li>Barang-barang interaktif di tiap dunia dengan obrolan singkat</li>
+          <li>Teman NPC dengan mini-dialog (pilih respons) + High Five</li>
+          <li>Link undangan — karaktermu bisa "hadir" di dunia temanmu</li>
+          <li>Musik latar santai yang dibuat langsung lewat kode</li>
+        </ul>
+        <p>Siapa pun yang membuka link situs ini bisa langsung membuat karakternya sendiri dan main — situsnya publik begitu di-deploy ke GitHub Pages.</p>
+      </div>
+      <figure class="about-figure">
+        <img src="https://images.pexels.com/photos/9071471/pexels-photo-9071471.jpeg?auto=compress&cs=tinysrgb&w=1200" alt="Dua teman tertawa bersama sambil main game">
+        <figcaption>Dibuat untuk momen main bareng teman, kapan saja dan di mana saja.</figcaption>
+      </figure>
+    </div>
+  </section>
+
+</main>
+
+<footer class="site-footer">
+  <div class="footer-inner">
+    <div class="footer-brand">
+      <span class="logo-mark small">🎀</span>
+      <span class="logo-text">MAIWORLD</span>
+    </div>
+    <p class="footer-note">Foto latar oleh fotografer di <a href="https://www.pexels.com" target="_blank" rel="noopener">Pexels</a>, digunakan bebas royalti di bawah Pexels License. Semua karakter pixel & musik latar adalah karya orisinal untuk situs ini.</p>
+    <p class="footer-copy pixel-label">© <span id="year"></span> MAIWORLD</p>
+  </div>
+</footer>
+
+<!-- MODAL -->
+<div class="modal-backdrop" id="modalBackdrop">
+  <div class="modal-panel" id="modalPanel" role="dialog" aria-modal="true">
+    <button class="modal-close" id="modalClose" aria-label="Tutup">✕</button>
+    <div id="modalBody"></div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script src="js/pixelart.js"></script>
+<script src="js/audio.js"></script>
+<script src="js/main.js"></script>
+</body>
+</html>

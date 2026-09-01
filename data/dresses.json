@@ -1,0 +1,19 @@
+{
+  "legend": "titik=transparan, D=warna dress(bisa diganti)",
+  "grid": [
+    "..........",
+    "..........",
+    "..........",
+    "..........",
+    "..........",
+    "..........",
+    ".DDDDDDDD.",
+    ".DDDDDDDD.",
+    "DDDDDDDDDD",
+    "DDDDDDDDDD",
+    "DDDDDDDDDD",
+    "DDDDDDDDDD",
+    ".DDDDDDDD.",
+    ".........."
+  ]
+}

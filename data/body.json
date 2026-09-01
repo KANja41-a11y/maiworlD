@@ -1,0 +1,19 @@
+{
+  "legend": "titik=transparan, S=kulit(bisa diganti), E=mata, M=pipi blush, F=sepatu(coklat tetap)",
+  "grid": [
+    "..........",
+    "..SSSSSS..",
+    ".SSSSSSSS.",
+    ".SSESSESS.",
+    ".SSSMSSSS.",
+    "..SSSSSS..",
+    "S........S",
+    "S........S",
+    "..........",
+    "..........",
+    "..........",
+    "..........",
+    "..........",
+    "..FF..FF.."
+  ]
+}
