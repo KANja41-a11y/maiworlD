@@ -1,0 +1,100 @@
+{
+  "items": [
+    {
+      "id": "bench",
+      "name": "Picnic bench",
+      "world": "park",
+      "message": "You sit down for a tiny rest. Someone nearby says hi. ♡"
+    },
+    {
+      "id": "flower",
+      "name": "Flower patch",
+      "world": "park",
+      "message": "You picked a virtual flower for your friend. 🌷"
+    },
+    {
+      "id": "bell",
+      "name": "School bell",
+      "world": "school",
+      "message": "Ding ding! Class is over — let's go hang out! 🔔"
+    },
+    {
+      "id": "locker",
+      "name": "Cute locker",
+      "world": "school",
+      "message": "Inside: a tiny note that says 'you are doing great'. 💌"
+    },
+    {
+      "id": "coffee",
+      "name": "Mochi latte",
+      "world": "cafe",
+      "message": "Warm, sweet and very cozy. ☕"
+    },
+    {
+      "id": "jukebox",
+      "name": "Jukebox",
+      "world": "cafe",
+      "message": "A mellow tune starts playing. ♫"
+    },
+    {
+      "id": "easel",
+      "name": "Little easel",
+      "world": "studio",
+      "message": "You add one tiny pixel to the gallery. 🎨"
+    },
+    {
+      "id": "gallery",
+      "name": "Art wall",
+      "world": "studio",
+      "message": "Every piece here was made by a dreamer. ✨"
+    },
+    {
+      "id": "shell",
+      "name": "Seashell",
+      "world": "beach",
+      "message": "You found a tiny shell. Make a wish. 🐚"
+    },
+    {
+      "id": "swing",
+      "name": "Cloud swing",
+      "world": "plaza",
+      "message": "Wheee! The swing carries you through a soft pink breeze."
+    },
+    {
+      "id": "book",
+      "name": "Magic book",
+      "world": "library",
+      "message": "The book opens to a page about a friendship that lasts forever. 📖"
+    },
+    {
+      "id": "arcade",
+      "name": "Pixel machine",
+      "world": "arcade",
+      "message": "You scored 999! Challenge your friend next. 🕹️"
+    },
+    {
+      "id": "seed",
+      "name": "Flower seed",
+      "world": "garden",
+      "message": "You planted a tiny seed. Come back later and see it bloom. 🌱"
+    },
+    {
+      "id": "mic",
+      "name": "Microphone",
+      "world": "concert",
+      "message": "You take the stage! Use an emote and wave to the crowd. 🎤"
+    },
+    {
+      "id": "piano",
+      "name": "Dream piano",
+      "world": "concert",
+      "message": "A soft chord floats through the room. ♫"
+    },
+    {
+      "id": "photo",
+      "name": "Photo booth",
+      "world": "plaza",
+      "message": "Snapshot! You and your friends made a cute memory. 📸"
+    }
+  ]
+}

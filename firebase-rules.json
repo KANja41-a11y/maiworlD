@@ -1,0 +1,21 @@
+{
+  "rules": {
+    "worlds": {
+      "$worldId": {
+        "players": {
+          "$uid": {
+            ".read": "auth != null",
+            ".write": "auth != null && auth.uid === $uid",
+            ".validate": "newData.hasChildren(['name','avatar','x','y','direction','online','lastSeen']) && newData.child('name').isString() && newData.child('name').val().length <= 16 && newData.child('x').isNumber() && newData.child('y').isNumber() && newData.child('online').isBoolean()"
+          }
+        },
+        "chat": {
+          "$messageId": {
+            ".read": "auth != null",
+            ".write": "auth != null && newData.child('uid').val() === auth.uid && newData.child('text').isString() && newData.child('text').val().length <= 80"
+          }
+        }
+      }
+    }
+  }
+}

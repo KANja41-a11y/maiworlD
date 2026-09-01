@@ -1,0 +1,162 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#ffb6d5">
+  <meta name="description" content="MAIWORLD — a cute pastel online pixel world to meet friends, chat and explore.">
+  <title>MAIWORLD ✦ Meet • Play • Share</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@400;500;600;700;800&family=Press+Start+2P&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="./style.css">
+</head>
+<body>
+  <div id="boot" class="boot">
+    <div class="boot-card">
+      <div class="pixel-logo">MAI<span>WORLD</span></div>
+      <div class="boot-dot"></div>
+      <p>loading your little world...</p>
+    </div>
+  </div>
+
+  <header class="topbar">
+    <button class="brand" id="brandBtn" aria-label="Home">
+      <span class="brand-spark">✦</span>
+      <span>MAI<span>WORLD</span></span>
+    </button>
+    <div class="top-actions">
+      <div class="online-pill"><i></i><span id="onlineCount">1</span> online</div>
+      <button class="icon-btn" id="musicBtn" title="Relaxing music">♫</button>
+      <button class="avatar-mini" id="profileBtn" title="My character"><canvas id="miniAvatar" width="48" height="48"></canvas></button>
+    </div>
+  </header>
+
+  <main class="app">
+    <section id="homeView" class="view active">
+      <div class="hero">
+        <div class="hero-copy">
+          <span class="eyebrow">A tiny world for big friendships ✦</span>
+          <h1>Meet. Play.<br><em>Be yourself.</em></h1>
+          <p>Dress up your pixel character, explore cute places, meet online friends, and leave little stories behind.</p>
+          <div class="hero-actions">
+            <button class="primary" id="playBtn">Enter MAIWORLD <span>→</span></button>
+            <button class="ghost" id="customizeBtn">Customize me ♡</button>
+          </div>
+          <div class="feature-row">
+            <span>✦ pixel avatars</span><span>✦ live chat</span><span>✦ shared worlds</span>
+          </div>
+        </div>
+        <div class="hero-scene" aria-label="MAIWORLD preview">
+          <div class="cloud cloud-a"></div><div class="cloud cloud-b"></div>
+          <div class="sun"></div>
+          <div class="floating-heart">♥</div>
+          <canvas id="heroCanvas" width="620" height="520"></canvas>
+          <div class="scene-sign">WELCOME TO<br><b>MAIWORLD</b> ♡</div>
+        </div>
+      </div>
+      <div class="home-grid">
+        <article class="home-card pink"><span>🌸</span><h3>Explore worlds</h3><p>Park, school, café, beach, studio and more.</p></article>
+        <article class="home-card lilac"><span>🧸</span><h3>Make your look</h3><p>Mix hair, tops, bottoms, dresses and colors.</p></article>
+        <article class="home-card cream"><span>💬</span><h3>Find your people</h3><p>Say hi, chat, wave and share tiny moments.</p></article>
+      </div>
+    </section>
+
+    <section id="gameView" class="view game-layout">
+      <div class="world-panel">
+        <div class="world-toolbar">
+          <div>
+            <div class="crumb">MAIWORLD / <span id="worldName">Plaza</span></div>
+            <h2 id="worldTitle">Dream Plaza</h2>
+          </div>
+          <div class="toolbar-actions">
+            <button class="small-btn" id="worldBtn">Worlds</button>
+            <button class="small-btn" id="friendsBtn">Friends <b id="friendCount">0</b></button>
+            <button class="small-btn" id="profileGameBtn">Character</button>
+          </div>
+        </div>
+        <div class="game-shell">
+          <canvas id="gameCanvas" width="960" height="600"></canvas>
+          <div class="canvas-hud">
+            <div class="location-chip">📍 <span id="locationChip">Dream Plaza</span></div>
+            <div class="controls-chip">WASD / arrows · E interact</div>
+          </div>
+          <div id="interactionBubble" class="interaction-bubble hidden"></div>
+        </div>
+        <div class="emote-bar" id="emoteBar"></div>
+        <div class="mobile-controls">
+          <button data-key="ArrowUp">▲</button>
+          <div><button data-key="ArrowLeft">◀</button><button data-key="ArrowDown">▼</button><button data-key="ArrowRight">▶</button></div>
+          <button id="mobileInteract">E</button>
+        </div>
+      </div>
+      <aside class="side-panel">
+        <div class="side-head">
+          <div><span class="status-dot"></span> <span id="connectionText">Local demo</span></div>
+          <button class="close-side" id="closeSide">×</button>
+        </div>
+        <div class="me-card">
+          <canvas id="sideAvatar" width="84" height="84"></canvas>
+          <div><strong id="sideName">Mai</strong><span id="sideStatus">exploring</span></div>
+          <button id="editNameBtn">✎</button>
+        </div>
+        <div class="chat-title">World chat <span>live</span></div>
+        <div id="chatLog" class="chat-log"></div>
+        <form id="chatForm" class="chat-form">
+          <input id="chatInput" maxlength="80" autocomplete="off" placeholder="say something kind...">
+          <button>➤</button>
+        </form>
+        <div class="nearby-title">Online now</div>
+        <div id="playerList" class="player-list"></div>
+      </aside>
+    </section>
+  </main>
+
+  <div id="worldModal" class="modal hidden">
+    <div class="modal-card world-modal-card">
+      <button class="modal-x" data-close="worldModal">×</button>
+      <span class="eyebrow">choose a place</span>
+      <h2>Where should we go?</h2>
+      <div id="worldChoices" class="world-choices"></div>
+    </div>
+  </div>
+
+  <div id="profileModal" class="modal hidden">
+    <div class="modal-card">
+      <button class="modal-x" data-close="profileModal">×</button>
+      <span class="eyebrow">your little identity</span>
+      <h2>Customize character</h2>
+      <div class="profile-editor">
+        <div class="preview-box"><canvas id="profileAvatar" width="180" height="180"></canvas></div>
+        <div class="editor-controls">
+          <label>Nickname<input id="nameInput" maxlength="16" placeholder="your name"></label>
+          <label>Skin<select id="skinSelect"></select></label>
+          <label>Hair<select id="hairSelect"></select></label>
+          <label>Eyes<select id="eyesSelect"></select></label>
+          <label>Mouth<select id="mouthsSelect"></select></label>
+          <label>Top<select id="topSelect"></select></label>
+          <label>Bottom<select id="bottomSelect"></select></label>
+          <label>Dress<select id="dressSelect"></select></label>
+          <label>Shoes<select id="shoesSelect"></select></label>
+          <label>Accessory<select id="accessoriesSelect"></select></label>
+          <label>Bag<select id="bagsSelect"></select></label>
+          <button class="primary full" id="saveProfile">Save my look ♡</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="friendsModal" class="modal hidden">
+    <div class="modal-card">
+      <button class="modal-x" data-close="friendsModal">×</button>
+      <span class="eyebrow">say hello</span>
+      <h2>Friends in this world</h2>
+      <div id="friendsModalList" class="friends-modal-list"></div>
+    </div>
+  </div>
+
+  <div id="toast" class="toast"></div>
+
+  <script type="module" src="./script.js"></script>
+</body>
+</html>

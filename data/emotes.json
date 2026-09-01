@@ -1,0 +1,64 @@
+{
+  "emotes": [
+    {
+      "id": "wave",
+      "label": "Wave",
+      "emoji": "👋"
+    },
+    {
+      "id": "happy",
+      "label": "Happy",
+      "emoji": "🥰"
+    },
+    {
+      "id": "heart",
+      "label": "Heart",
+      "emoji": "❤️"
+    },
+    {
+      "id": "dance",
+      "label": "Dance",
+      "emoji": "💃"
+    },
+    {
+      "id": "laugh",
+      "label": "Laugh",
+      "emoji": "😂"
+    },
+    {
+      "id": "cry",
+      "label": "Cry",
+      "emoji": "🥹"
+    },
+    {
+      "id": "sleep",
+      "label": "Sleepy",
+      "emoji": "😴"
+    },
+    {
+      "id": "surprise",
+      "label": "Surprised",
+      "emoji": "😳"
+    },
+    {
+      "id": "sparkle",
+      "label": "Sparkle",
+      "emoji": "✨"
+    },
+    {
+      "id": "love",
+      "label": "Love",
+      "emoji": "💗"
+    },
+    {
+      "id": "clap",
+      "label": "Clap",
+      "emoji": "👏"
+    },
+    {
+      "id": "sit",
+      "label": "Sit",
+      "emoji": "🧸"
+    }
+  ]
+}

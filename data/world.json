@@ -1,0 +1,114 @@
+{
+  "worlds": [
+    {
+      "id": "plaza",
+      "name": "Dream Plaza",
+      "emoji": "🌷",
+      "description": "The cozy heart of MAIWORLD.",
+      "spawn": [
+        480,
+        360
+      ],
+      "sky": "pink"
+    },
+    {
+      "id": "park",
+      "name": "Moonlight Park",
+      "emoji": "🌳",
+      "description": "Picnic, flowers and a tiny pond.",
+      "spawn": [
+        470,
+        350
+      ],
+      "sky": "green"
+    },
+    {
+      "id": "school",
+      "name": "Mochi School",
+      "emoji": "🏫",
+      "description": "Study, hang out and ring the bell.",
+      "spawn": [
+        470,
+        370
+      ],
+      "sky": "blue"
+    },
+    {
+      "id": "cafe",
+      "name": "Cloud Café",
+      "emoji": "☕",
+      "description": "Warm drinks and friend chats.",
+      "spawn": [
+        470,
+        350
+      ],
+      "sky": "cream"
+    },
+    {
+      "id": "studio",
+      "name": "Mimi Studio",
+      "emoji": "🎨",
+      "description": "Create, draw and display your work.",
+      "spawn": [
+        470,
+        360
+      ],
+      "sky": "lilac"
+    },
+    {
+      "id": "beach",
+      "name": "Peachy Beach",
+      "emoji": "🏖️",
+      "description": "A soft sunset beach for everyone.",
+      "spawn": [
+        470,
+        360
+      ],
+      "sky": "sunset"
+    },
+    {
+      "id": "library",
+      "name": "Dream Library",
+      "emoji": "📚",
+      "description": "Read, whisper and discover tiny secrets.",
+      "spawn": [
+        470,
+        360
+      ],
+      "sky": "blue"
+    },
+    {
+      "id": "arcade",
+      "name": "Pixel Arcade",
+      "emoji": "🕹️",
+      "description": "Play tiny games with friends.",
+      "spawn": [
+        470,
+        360
+      ],
+      "sky": "lilac"
+    },
+    {
+      "id": "garden",
+      "name": "Fairy Garden",
+      "emoji": "🧚",
+      "description": "Plant flowers and make wishes.",
+      "spawn": [
+        470,
+        360
+      ],
+      "sky": "green"
+    },
+    {
+      "id": "concert",
+      "name": "Starlight Stage",
+      "emoji": "🎤",
+      "description": "Dance, emote and enjoy the music.",
+      "spawn": [
+        470,
+        360
+      ],
+      "sky": "sunset"
+    }
+  ]
+}

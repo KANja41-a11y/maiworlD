@@ -1,0 +1,298 @@
+{
+  "skins": [
+    {
+      "id": "peach",
+      "name": "Peach"
+    },
+    {
+      "id": "cream",
+      "name": "Cream"
+    },
+    {
+      "id": "honey",
+      "name": "Honey"
+    },
+    {
+      "id": "mocha",
+      "name": "Mocha"
+    },
+    {
+      "id": "rose",
+      "name": "Rose"
+    },
+    {
+      "id": "vanilla",
+      "name": "Vanilla"
+    }
+  ],
+  "hair": [
+    {
+      "id": "blonde",
+      "name": "Blonde Waves"
+    },
+    {
+      "id": "blondeLong",
+      "name": "Golden Long Hair"
+    },
+    {
+      "id": "brown",
+      "name": "Chocolate Bob"
+    },
+    {
+      "id": "black",
+      "name": "Midnight Hair"
+    },
+    {
+      "id": "pink",
+      "name": "Cotton Candy"
+    },
+    {
+      "id": "lilac",
+      "name": "Lilac Dream"
+    },
+    {
+      "id": "blue",
+      "name": "Ocean Blue"
+    },
+    {
+      "id": "mint",
+      "name": "Mint Pop"
+    },
+    {
+      "id": "shortBlack",
+      "name": "Cool Short"
+    }
+  ],
+  "eyes": [
+    {
+      "id": "sparkle",
+      "name": "Sparkle Eyes"
+    },
+    {
+      "id": "round",
+      "name": "Round Eyes"
+    },
+    {
+      "id": "sleepy",
+      "name": "Sleepy Eyes"
+    },
+    {
+      "id": "star",
+      "name": "Star Eyes"
+    },
+    {
+      "id": "heart",
+      "name": "Heart Eyes"
+    },
+    {
+      "id": "wink",
+      "name": "Wink"
+    }
+  ],
+  "mouths": [
+    {
+      "id": "smile",
+      "name": "Tiny Smile"
+    },
+    {
+      "id": "open",
+      "name": "Happy Open"
+    },
+    {
+      "id": "cat",
+      "name": "Cat Mouth"
+    },
+    {
+      "id": "blush",
+      "name": "Blushy"
+    },
+    {
+      "id": "pout",
+      "name": "Pout"
+    }
+  ],
+  "tops": [
+    {
+      "id": "teePink",
+      "name": "Pink Tee"
+    },
+    {
+      "id": "teeLilac",
+      "name": "Lilac Tee"
+    },
+    {
+      "id": "teeMint",
+      "name": "Mint Tee"
+    },
+    {
+      "id": "hoodie",
+      "name": "Cozy Hoodie"
+    },
+    {
+      "id": "cardi",
+      "name": "Soft Cardigan"
+    },
+    {
+      "id": "sailor",
+      "name": "Sailor Top"
+    },
+    {
+      "id": "oversized",
+      "name": "Oversized Tee"
+    },
+    {
+      "id": "cropped",
+      "name": "Cute Crop Top"
+    },
+    {
+      "id": "uniform",
+      "name": "School Top"
+    }
+  ],
+  "bottoms": [
+    {
+      "id": "jeans",
+      "name": "Blue Jeans"
+    },
+    {
+      "id": "skirt",
+      "name": "Pink Skirt"
+    },
+    {
+      "id": "shorts",
+      "name": "Cream Shorts"
+    },
+    {
+      "id": "wide",
+      "name": "Wide Pants"
+    },
+    {
+      "id": "cargo",
+      "name": "Cute Cargo"
+    },
+    {
+      "id": "pleated",
+      "name": "Pleated Skirt"
+    }
+  ],
+  "dresses": [
+    {
+      "id": "none",
+      "name": "No Dress"
+    },
+    {
+      "id": "strawberry",
+      "name": "Strawberry Dress"
+    },
+    {
+      "id": "lavender",
+      "name": "Lavender Dress"
+    },
+    {
+      "id": "cloud",
+      "name": "Cloud Dress"
+    },
+    {
+      "id": "ballet",
+      "name": "Ballet Dress"
+    },
+    {
+      "id": "party",
+      "name": "Party Dress"
+    },
+    {
+      "id": "flower",
+      "name": "Flower Dress"
+    },
+    {
+      "id": "denim",
+      "name": "Denim Dress"
+    }
+  ],
+  "shoes": [
+    {
+      "id": "sneakers",
+      "name": "Pink Sneakers"
+    },
+    {
+      "id": "mary",
+      "name": "Mary Janes"
+    },
+    {
+      "id": "boots",
+      "name": "Pastel Boots"
+    },
+    {
+      "id": "sandals",
+      "name": "Cute Sandals"
+    },
+    {
+      "id": "loafers",
+      "name": "Loafers"
+    },
+    {
+      "id": "platform",
+      "name": "Platform Shoes"
+    }
+  ],
+  "accessories": [
+    {
+      "id": "none",
+      "name": "No Accessory"
+    },
+    {
+      "id": "bow",
+      "name": "Big Bow"
+    },
+    {
+      "id": "bear",
+      "name": "Bear Ears"
+    },
+    {
+      "id": "cat",
+      "name": "Cat Ears"
+    },
+    {
+      "id": "flower",
+      "name": "Flower Clip"
+    },
+    {
+      "id": "crown",
+      "name": "Tiny Crown"
+    },
+    {
+      "id": "headphones",
+      "name": "Headphones"
+    },
+    {
+      "id": "starclip",
+      "name": "Star Clip"
+    },
+    {
+      "id": "glasses",
+      "name": "Round Glasses"
+    }
+  ],
+  "bags": [
+    {
+      "id": "none",
+      "name": "No Bag"
+    },
+    {
+      "id": "heartbag",
+      "name": "Heart Bag"
+    },
+    {
+      "id": "teddy",
+      "name": "Teddy Bag"
+    },
+    {
+      "id": "backpack",
+      "name": "Mini Backpack"
+    },
+    {
+      "id": "cloudbag",
+      "name": "Cloud Bag"
+    }
+  ]
+}
