@@ -84,133 +84,91 @@ async function loadJSON(path) {
 }
 
 
-/* =========================================================
-   INIT
-========================================================= */
+// =====================================================
+// INIT
+// =====================================================
 
 async function init() {
   try {
+
     const [
-      worldData,
-      itemData,
-      characterData,
-      emoteData
+      worldsData,
+      itemsData,
+      emotesData,
+      charactersData
     ] = await Promise.all([
-      loadJSON("./data/world.json"),
-      loadJSON("./data/items.json"),
-      loadJSON("./data/characters.json"),
-      loadJSON("./data/emotes.json")
+
+      fetch("./data/world.json")
+        .then(r => r.json()),
+
+      fetch("./data/items.json")
+        .then(r => r.json()),
+
+      fetch("./data/emotes.json")
+        .then(r => r.json()),
+
+      fetch("./data/characters.json")
+        .then(r => r.json())
     ]);
 
-    /*
-      IMPORTANT:
-      world.json = { worlds: [...] }
-      items.json = { items: [...] }
-      emotes.json = { emotes: [...] }
 
-      We normalize them here so the rest of the
-      game can work with normal arrays.
-    */
+    state.worlds =
+      normalizeWorldData(worldsData);
 
-    state.worlds = Array.isArray(worldData)
-      ? worldData
-      : worldData.worlds || [];
+    state.items =
+      normalizeItemsData(itemsData);
 
-    state.items = Array.isArray(itemData)
-      ? itemData
-      : itemData.items || [];
+    state.emotes =
+      normalizeEmotesData(emotesData);
 
-    state.characters = characterData || {};
-
-    state.emotes = Array.isArray(emoteData)
-      ? emoteData
-      : emoteData.emotes || [];
+    state.characters =
+      charactersData || {};
 
 
-    /* Load saved profile */
-
-    const saved = localStorage.getItem("maiworld-profile");
-
-    if (saved) {
-      try {
-        Object.assign(
-          state.config,
-          JSON.parse(saved)
-        );
-      } catch (error) {
-        console.warn(
-          "Could not read saved profile:",
-          error
-        );
-      }
-    }
-
-
-    /* Render everything */
-
-    populateEditor();
-    renderProfileEverywhere();
-    renderWorldChoices();
-    renderEmotes();
-    renderWorld();
-    drawHero();
-
-    /* Bind buttons BEFORE Firebase */
-
+    // UI langsung aktif
     bindUI();
 
-    /* Hide loading screen immediately */
+    bindExtraUI();
 
+    setupMusic();
+
+
+    // Render awal
+    renderWorld();
+
+    renderEmotes();
+
+    renderWorldList();
+
+    renderProfile();
+
+
+    // ⭐ LOADING LANGSUNG HILANG
     hideBoot();
 
-    /* Start Firebase separately */
 
-    if (FIREBASE_READY) {
-      setupFirebase();
-    } else {
-      setConnection("Local demo");
-    }
+    // Game langsung berjalan
+    loop();
 
-    /* Start game loop */
 
-    requestAnimationFrame(loop);
+    // Firebase jalan di belakang
+    setupFirebase();
+
 
   } catch (error) {
 
     console.error(
-      "MAIWORLD initialization error:",
+      "MAIWORLD init error:",
       error
     );
 
-    /*
-      Even if something goes wrong,
-      the buttons should still work.
-    */
-
-    try {
-      populateEditor();
-      renderProfileEverywhere();
-      bindUI();
-      drawHero();
-      renderWorld();
-      renderEmotes();
-      renderWorldChoices();
-    } catch (fallbackError) {
-      console.error(
-        "Fallback initialization error:",
-        fallbackError
-      );
-    }
-
     hideBoot();
 
-    setConnection("Local demo");
-
-    requestAnimationFrame(loop);
+    toast(
+      "MAIWORLD gagal dimuat ♡"
+    );
   }
 }
-
-
 /* =========================================================
    BOOT
 ========================================================= */
