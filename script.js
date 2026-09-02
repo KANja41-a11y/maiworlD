@@ -4005,3 +4005,2280 @@ function toggleMusic() {
 ========================================================= */
 
 init();
+// =====================================================
+// WORLD INTERACTION SPOTS
+// =====================================================
+
+function getWorldSpots() {
+
+  return {
+
+    plaza: [
+      {
+        x: 200,
+        y: 390,
+        id: "swing"
+      },
+      {
+        x: 710,
+        y: 380,
+        id: "photo"
+      }
+    ],
+
+    park: [
+      {
+        x: 420,
+        y: 400,
+        id: "bench"
+      },
+      {
+        x: 780,
+        y: 410,
+        id: "flower"
+      }
+    ],
+
+    school: [
+      {
+        x: 250,
+        y: 350,
+        id: "locker"
+      },
+      {
+        x: 680,
+        y: 350,
+        id: "bell"
+      }
+    ],
+
+    cafe: [
+      {
+        x: 420,
+        y: 400,
+        id: "coffee"
+      },
+      {
+        x: 600,
+        y: 400,
+        id: "jukebox"
+      }
+    ],
+
+    studio: [
+      {
+        x: 210,
+        y: 360,
+        id: "easel"
+      },
+      {
+        x: 730,
+        y: 360,
+        id: "gallery"
+      }
+    ],
+
+    beach: [
+      {
+        x: 250,
+        y: 450,
+        id: "shell"
+      }
+    ],
+
+    library: [
+      {
+        x: 480,
+        y: 390,
+        id: "book"
+      }
+    ],
+
+    arcade: [
+      {
+        x: 480,
+        y: 390,
+        id: "arcade"
+      }
+    ],
+
+    garden: [
+      {
+        x: 480,
+        y: 390,
+        id: "seed"
+      }
+    ],
+
+    concert: [
+      {
+        x: 420,
+        y: 390,
+        id: "mic"
+      },
+      {
+        x: 600,
+        y: 390,
+        id: "piano"
+      }
+    ]
+
+  }[state.world] || [];
+}
+
+
+// =====================================================
+// ITEM ICONS
+// =====================================================
+
+const itemIcons = {
+
+  swing: "🎀",
+  photo: "📸",
+
+  bench: "🪑",
+  flower: "🌷",
+
+  locker: "🔐",
+  bell: "🔔",
+
+  coffee: "☕",
+  jukebox: "🎵",
+
+  easel: "🎨",
+  gallery: "🖼️",
+
+  shell: "🐚",
+
+  book: "📚",
+
+  arcade: "🕹️",
+
+  seed: "🌱",
+
+  mic: "🎤",
+  piano: "🎹"
+};
+
+
+// =====================================================
+// FIND NEAREST ITEM
+// =====================================================
+
+function nearestItem(
+  targetX = null,
+  targetY = null,
+  radius = 95
+) {
+
+  if (!state.me && targetX === null) {
+    return null;
+  }
+
+  const list = getWorldSpots();
+
+  let x = targetX;
+  let y = targetY;
+
+  if (x === null || y === null) {
+    x = state.me.x;
+    y = state.me.y;
+  }
+
+  let best = null;
+  let bestDistance = radius;
+
+  for (const spot of list) {
+
+    const distance = Math.hypot(
+      x - spot.x,
+      y - spot.y
+    );
+
+    if (distance < bestDistance) {
+
+      best = spot;
+      bestDistance = distance;
+    }
+  }
+
+  return best;
+}
+
+
+// =====================================================
+// DRAW ITEMS
+// =====================================================
+
+function drawItems(ctx) {
+
+  const spots = getWorldSpots();
+
+  const nearby = nearestItem();
+
+  const time = Date.now();
+
+  spots.forEach(spot => {
+
+    const item =
+      state.items.find(
+        x => x.id === spot.id
+      );
+
+    const icon =
+      itemIcons[spot.id] || "♡";
+
+    const pulse =
+      Math.sin(time / 350 + spot.x) * 2;
+
+    // -------------------------------------------------
+    // cute item shadow
+    // -------------------------------------------------
+
+    ctx.save();
+
+    ctx.fillStyle =
+      "rgba(130,90,120,.10)";
+
+    ctx.beginPath();
+
+    ctx.ellipse(
+      spot.x,
+      spot.y + 20,
+      27,
+      8,
+      0,
+      0,
+      Math.PI * 2
+    );
+
+    ctx.fill();
+
+    ctx.restore();
+
+
+    // -------------------------------------------------
+    // item bubble
+    // -------------------------------------------------
+
+    ctx.save();
+
+    ctx.font =
+      "25px Arial";
+
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+
+    ctx.fillText(
+      icon,
+      spot.x,
+      spot.y - 3 + pulse
+    );
+
+    ctx.restore();
+
+
+    // -------------------------------------------------
+    // tiny floating sparkle
+    // -------------------------------------------------
+
+    ctx.save();
+
+    ctx.fillStyle =
+      "rgba(255,150,200,.8)";
+
+    ctx.font =
+      "12px Arial";
+
+    ctx.textAlign = "center";
+
+    ctx.fillText(
+      "✦",
+      spot.x - 25,
+      spot.y - 20 + pulse
+    );
+
+    ctx.fillStyle =
+      "rgba(190,150,230,.8)";
+
+    ctx.fillText(
+      "♡",
+      spot.x + 27,
+      spot.y - 5 - pulse
+    );
+
+    ctx.restore();
+
+
+    // -------------------------------------------------
+    // INTERACT PROMPT
+    // -------------------------------------------------
+
+    if (
+      nearby &&
+      nearby.id === spot.id
+    ) {
+
+      const promptY =
+        spot.y - 58 + pulse;
+
+      ctx.save();
+
+      ctx.font =
+        "700 13px Arial";
+
+      const text =
+        "♡ E  Interact!";
+
+      const width =
+        ctx.measureText(text).width + 24;
+
+      const height = 30;
+
+      ctx.fillStyle =
+        "rgba(255,255,255,.96)";
+
+      ctx.strokeStyle =
+        "rgba(255,150,195,.55)";
+
+      ctx.lineWidth = 2;
+
+      ctx.beginPath();
+
+      if (ctx.roundRect) {
+
+        ctx.roundRect(
+          spot.x - width / 2,
+          promptY - height / 2,
+          width,
+          height,
+          15
+        );
+
+      } else {
+
+        ctx.rect(
+          spot.x - width / 2,
+          promptY - height / 2,
+          width,
+          height
+        );
+      }
+
+      ctx.fill();
+      ctx.stroke();
+
+      ctx.fillStyle =
+        "#76576b";
+
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+
+      ctx.fillText(
+        text,
+        spot.x,
+        promptY + 1
+      );
+
+      ctx.restore();
+
+
+      // tiny arrow
+
+      ctx.save();
+
+      ctx.fillStyle =
+        "rgba(255,255,255,.96)";
+
+      ctx.beginPath();
+
+      ctx.moveTo(
+        spot.x - 7,
+        promptY + 14
+      );
+
+      ctx.lineTo(
+        spot.x,
+        promptY + 22
+      );
+
+      ctx.lineTo(
+        spot.x + 7,
+        promptY + 14
+      );
+
+      ctx.closePath();
+
+      ctx.fill();
+
+      ctx.restore();
+    }
+  });
+}
+
+
+// =====================================================
+// INTERACTION
+// =====================================================
+
+function interact(spotOverride = null) {
+
+  if (!state.me) return;
+
+  const spot =
+    spotOverride || nearestItem();
+
+  if (!spot) {
+
+    toast(
+      "Jalan sedikit lebih dekat yaa ♡"
+    );
+
+    return;
+  }
+
+  const distance =
+    Math.hypot(
+      state.me.x - spot.x,
+      state.me.y - spot.y
+    );
+
+  if (distance > 120) {
+
+    toast(
+      "Deketin dulu objeknya ✦"
+    );
+
+    return;
+  }
+
+  const item =
+    state.items.find(
+      x => x.id === spot.id
+    );
+
+  if (!item) return;
+
+
+  // -------------------------------------------------
+  // save interaction animation
+  // -------------------------------------------------
+
+  state.interaction = {
+
+    id: spot.id,
+
+    x: spot.x,
+
+    y: spot.y,
+
+    time: Date.now()
+  };
+
+
+  // -------------------------------------------------
+  // HTML interaction bubble
+  // -------------------------------------------------
+
+  const bubble =
+    $("#interactionBubble");
+
+  if (bubble) {
+
+    bubble.innerHTML = `
+      <span class="interaction-heart">♡</span>
+      ${escapeHTML(item.message || item.name || "Cute!")}
+      <span class="interaction-sparkle">✦</span>
+    `;
+
+    bubble.classList.remove("hidden");
+
+    // restart animation
+    bubble.style.animation = "none";
+
+    void bubble.offsetWidth;
+
+    bubble.style.animation =
+      "cuteInteract .35s ease-out";
+
+    clearTimeout(
+      interact.timer
+    );
+
+    interact.timer =
+      setTimeout(() => {
+
+        bubble.classList.add(
+          "hidden"
+        );
+
+      }, 3000);
+  }
+
+
+  // -------------------------------------------------
+  // cute toast
+  // -------------------------------------------------
+
+  toast(
+    `${itemIcons[spot.id] || "♡"} ${item.name || "Cute interaction"} ✦`
+  );
+
+
+  // -------------------------------------------------
+  // send to chat
+  // -------------------------------------------------
+
+  sendChat(
+    `♡ ${item.message || item.name || "I interacted with something cute!"}`
+  );
+
+
+  renderWorld();
+}
+
+
+// =====================================================
+// INTERACTION EFFECT
+// =====================================================
+
+function drawInteractionEffect(ctx) {
+
+  if (!state.interaction) {
+    return;
+  }
+
+  const interaction =
+    state.interaction;
+
+  const elapsed =
+    Date.now() - interaction.time;
+
+  const duration = 900;
+
+  if (elapsed > duration) {
+
+    state.interaction = null;
+
+    return;
+  }
+
+  const progress =
+    elapsed / duration;
+
+  const alpha =
+    1 - progress;
+
+  const rise =
+    progress * 55;
+
+  const scale =
+    1 + progress * 0.5;
+
+  ctx.save();
+
+  ctx.globalAlpha = alpha;
+
+  ctx.textAlign = "center";
+  ctx.textBaseline = "middle";
+
+  ctx.font =
+    `${20 * scale}px Arial`;
+
+  ctx.fillStyle =
+    "#ff82b5";
+
+  ctx.fillText(
+    "♡",
+    interaction.x - 25,
+    interaction.y - 35 - rise
+  );
+
+  ctx.fillStyle =
+    "#c49be7";
+
+  ctx.fillText(
+    "✦",
+    interaction.x + 22,
+    interaction.y - 45 - rise
+  );
+
+  ctx.fillStyle =
+    "#ffb2cf";
+
+  ctx.font =
+    `${15 * scale}px Arial`;
+
+  ctx.fillText(
+    "✦",
+    interaction.x,
+    interaction.y - 70 - rise
+  );
+
+  ctx.restore();
+}
+
+
+// =====================================================
+// DRAW PLAYER
+// =====================================================
+
+function drawPlayer(
+  ctx,
+  player
+) {
+
+  if (!player) return;
+
+  drawAvatar(
+    ctx,
+    player.x,
+    player.y,
+    player.character ||
+      state.selectedCharacter,
+    1
+  );
+
+  // name
+  ctx.save();
+
+  ctx.font =
+    "700 12px Arial";
+
+  ctx.textAlign = "center";
+
+  ctx.fillStyle =
+    "rgba(100,75,95,.8)";
+
+  ctx.fillText(
+    player.name || "Player",
+    player.x,
+    player.y - 72
+  );
+
+  ctx.restore();
+
+
+  // emote
+  if (player.emote) {
+
+    ctx.save();
+
+    ctx.font =
+      "24px Arial";
+
+    ctx.textAlign = "center";
+
+    ctx.fillText(
+      player.emote,
+      player.x,
+      player.y - 88
+    );
+
+    ctx.restore();
+  }
+}
+
+
+// =====================================================
+// DRAW AVATAR
+// =====================================================
+
+function drawAvatar(
+  ctx,
+  x,
+  y,
+  character = {},
+  scale = 1
+) {
+
+  ctx.save();
+
+  ctx.translate(
+    x,
+    y
+  );
+
+  ctx.scale(
+    scale,
+    scale
+  );
+
+
+  // -------------------------------------------------
+  // shadow
+  // -------------------------------------------------
+
+  ctx.fillStyle =
+    "rgba(100,70,100,.12)";
+
+  ctx.beginPath();
+
+  ctx.ellipse(
+    0,
+    42,
+    25,
+    8,
+    0,
+    0,
+    Math.PI * 2
+  );
+
+  ctx.fill();
+
+
+  // -------------------------------------------------
+  // legs
+  // -------------------------------------------------
+
+  ctx.fillStyle =
+    "#f4b5cb";
+
+  box(
+    ctx,
+    -15,
+    15,
+    11,
+    28,
+    "#f0c3d3",
+    5
+  );
+
+  box(
+    ctx,
+    4,
+    15,
+    11,
+    28,
+    "#f0c3d3",
+    5
+  );
+
+
+  // -------------------------------------------------
+  // shoes
+  // -------------------------------------------------
+
+  box(
+    ctx,
+    -19,
+    37,
+    19,
+    9,
+    "#ffffff",
+    5
+  );
+
+  box(
+    ctx,
+    1,
+    37,
+    19,
+    9,
+    "#ffffff",
+    5
+  );
+
+
+  // -------------------------------------------------
+  // body
+  // -------------------------------------------------
+
+  let topColor =
+    "#f7b5cf";
+
+  if (
+    character.top === "top2"
+  ) {
+    topColor = "#bca4e8";
+  }
+
+  if (
+    character.top === "top3"
+  ) {
+    topColor = "#a9d9c2";
+  }
+
+  box(
+    ctx,
+    -24,
+    -20,
+    48,
+    45,
+    topColor,
+    15
+  );
+
+
+  // -------------------------------------------------
+  // dress
+  // -------------------------------------------------
+
+  if (character.dress) {
+
+    box(
+      ctx,
+      -30,
+      -18,
+      60,
+      65,
+      "#e7b7dc",
+      18
+    );
+  }
+
+
+  // -------------------------------------------------
+  // arms
+  // -------------------------------------------------
+
+  ctx.fillStyle =
+    "#f6c7b5";
+
+  ctx.beginPath();
+
+  ctx.arc(
+    -27,
+    -3,
+    7,
+    0,
+    Math.PI * 2
+  );
+
+  ctx.fill();
+
+  ctx.beginPath();
+
+  ctx.arc(
+    27,
+    -3,
+    7,
+    0,
+    Math.PI * 2
+  );
+
+  ctx.fill();
+
+
+  // -------------------------------------------------
+  // neck
+  // -------------------------------------------------
+
+  ctx.fillStyle =
+    "#f6c7b5";
+
+  ctx.fillRect(
+    -6,
+    -28,
+    12,
+    12
+  );
+
+
+  // -------------------------------------------------
+  // face
+  // -------------------------------------------------
+
+  let skin =
+    "#f6c7b5";
+
+  if (
+    character.skin === "skin2"
+  ) {
+    skin = "#e9aa8e";
+  }
+
+  if (
+    character.skin === "skin3"
+  ) {
+    skin = "#c98568";
+  }
+
+  ctx.fillStyle = skin;
+
+  ctx.beginPath();
+
+  ctx.arc(
+    0,
+    -47,
+    29,
+    0,
+    Math.PI * 2
+  );
+
+  ctx.fill();
+
+
+  // -------------------------------------------------
+  // hair
+  // -------------------------------------------------
+
+  let hairColor =
+    "#5b3d4c";
+
+  if (
+    character.hair === "hair2"
+  ) {
+    hairColor = "#8b5c3f";
+  }
+
+  if (
+    character.hair === "hair3"
+  ) {
+    hairColor = "#d79c58";
+  }
+
+  if (
+    character.hair === "hair4"
+  ) {
+    hairColor = "#7e75a8";
+  }
+
+  ctx.fillStyle =
+    hairColor;
+
+  ctx.beginPath();
+
+  ctx.arc(
+    0,
+    -57,
+    31,
+    Math.PI,
+    Math.PI * 2
+  );
+
+  ctx.fill();
+
+
+  // side hair
+
+  ctx.fillRect(
+    -30,
+    -60,
+    10,
+    35
+  );
+
+  ctx.fillRect(
+    20,
+    -60,
+    10,
+    35
+  );
+
+
+  // -------------------------------------------------
+  // eyes
+  // -------------------------------------------------
+
+  ctx.fillStyle =
+    "#4d3b49";
+
+  ctx.beginPath();
+
+  ctx.arc(
+    -10,
+    -47,
+    4,
+    0,
+    Math.PI * 2
+  );
+
+  ctx.fill();
+
+  ctx.beginPath();
+
+  ctx.arc(
+    10,
+    -47,
+    4,
+    0,
+    Math.PI * 2
+  );
+
+  ctx.fill();
+
+
+  // eye sparkle
+
+  ctx.fillStyle =
+    "#ffffff";
+
+  ctx.beginPath();
+
+  ctx.arc(
+    -9,
+    -48,
+    1.5,
+    0,
+    Math.PI * 2
+  );
+
+  ctx.fill();
+
+  ctx.beginPath();
+
+  ctx.arc(
+    11,
+    -48,
+    1.5,
+    0,
+    Math.PI * 2
+  );
+
+  ctx.fill();
+
+
+  // -------------------------------------------------
+  // mouth
+  // -------------------------------------------------
+
+  ctx.strokeStyle =
+    "#9c6176";
+
+  ctx.lineWidth = 2;
+
+  ctx.beginPath();
+
+  ctx.arc(
+    0,
+    -39,
+    5,
+    0,
+    Math.PI
+  );
+
+  ctx.stroke();
+
+
+  // -------------------------------------------------
+  // accessory
+  // -------------------------------------------------
+
+  if (character.accessory) {
+
+    ctx.fillStyle =
+      "#ffb0cf";
+
+    ctx.beginPath();
+
+    ctx.arc(
+      23,
+      -65,
+      7,
+      0,
+      Math.PI * 2
+    );
+
+    ctx.fill();
+  }
+
+
+  // -------------------------------------------------
+  // bag
+  // -------------------------------------------------
+
+  if (character.bag) {
+
+    ctx.strokeStyle =
+      "#a982c6";
+
+    ctx.lineWidth = 5;
+
+    ctx.beginPath();
+
+    ctx.arc(
+      29,
+      5,
+      15,
+      -Math.PI / 2,
+      Math.PI / 2
+    );
+
+    ctx.stroke();
+  }
+
+
+  ctx.restore();
+}
+
+
+// =====================================================
+// GAME LOOP
+// =====================================================
+
+function loop() {
+
+  updateMovement();
+
+  renderWorld();
+
+  requestAnimationFrame(
+    loop
+  );
+}
+
+
+// =====================================================
+// EMOTES
+// =====================================================
+
+function renderEmotes() {
+
+  const container =
+    $("#emoteBar");
+
+  if (!container) return;
+
+  container.innerHTML = "";
+
+  state.emotes.forEach(emote => {
+
+    const button =
+      document.createElement("button");
+
+    button.className =
+      "emote-button";
+
+    const value =
+      typeof emote === "string"
+        ? emote
+        : emote.emoji ||
+          emote.value ||
+          emote.symbol ||
+          "♡";
+
+    button.textContent =
+      value;
+
+    button.addEventListener(
+      "click",
+      () => {
+
+        if (!state.me) return;
+
+        state.me.emote =
+          value;
+
+        state.players[state.me.uid] = {
+          ...state.me
+        };
+
+        writePlayer();
+
+        setTimeout(() => {
+
+          if (
+            state.me &&
+            state.me.emote === value
+          ) {
+
+            state.me.emote = null;
+
+            state.players[state.me.uid] = {
+              ...state.me
+            };
+
+            writePlayer();
+          }
+
+        }, 2500);
+      }
+    );
+
+    container.appendChild(button);
+  });
+}
+// =====================================================
+// FIREBASE SETUP
+// =====================================================
+
+async function setupFirebase() {
+
+  if (!FIREBASE_READY) {
+
+    console.warn(
+      "Firebase belum diaktifkan."
+    );
+
+    state.firebaseReady = false;
+
+    return;
+  }
+
+  try {
+
+    const app =
+      initializeApp(
+        firebaseConfig
+      );
+
+    const auth =
+      getAuth(app);
+
+    state.db =
+      getDatabase(app);
+
+    await signInAnonymously(auth);
+
+    onAuthStateChanged(
+      auth,
+      user => {
+
+        if (!user) return;
+
+        state.uid =
+          user.uid;
+
+        state.firebaseReady =
+          true;
+
+        state.online = true;
+
+        if (!state.me) {
+          createLocalPlayer();
+        } else {
+
+          state.me.uid =
+            state.uid;
+
+          state.players[state.uid] = {
+            ...state.me
+          };
+        }
+
+        listenWorld();
+
+        updateConnectionStatus(
+          true
+        );
+
+        console.log(
+          "Firebase connected ♡",
+          state.uid
+        );
+      }
+    );
+
+  } catch (error) {
+
+    console.error(
+      "Firebase error:",
+      error
+    );
+
+    state.firebaseReady = false;
+    state.online = false;
+
+    updateConnectionStatus(
+      false
+    );
+
+    toast(
+      "Mode offline aktif ♡"
+    );
+  }
+}
+
+
+// =====================================================
+// LISTEN CURRENT WORLD
+// =====================================================
+
+function listenWorld() {
+
+  if (
+    !state.firebaseReady ||
+    !state.db ||
+    !state.uid
+  ) {
+    return;
+  }
+
+
+  // remove old listeners
+  if (state.unsubscribePlayers) {
+
+    state.unsubscribePlayers();
+
+    state.unsubscribePlayers =
+      null;
+  }
+
+  if (state.unsubscribeChat) {
+
+    state.unsubscribeChat();
+
+    state.unsubscribeChat =
+      null;
+  }
+
+
+  // ---------------------------------------------------
+  // PLAYERS
+  // ---------------------------------------------------
+
+  const playersRef =
+    ref(
+      state.db,
+      `worlds/${state.world}/players`
+    );
+
+  state.unsubscribePlayers =
+    onValue(
+      playersRef,
+      snapshot => {
+
+        const data =
+          snapshot.val() || {};
+
+        state.players = {
+          ...data
+        };
+
+
+        // make sure local player stays
+        if (state.me) {
+
+          state.players[state.uid] = {
+            ...state.me
+          };
+        }
+
+        renderWorld();
+      }
+    );
+
+
+  // ---------------------------------------------------
+  // CHAT
+  // ---------------------------------------------------
+
+  const chatRef =
+    ref(
+      state.db,
+      `worlds/${state.world}/chat`
+    );
+
+  state.unsubscribeChat =
+    onValue(
+      chatRef,
+      snapshot => {
+
+        const data =
+          snapshot.val() || {};
+
+        renderChat(
+          Object.values(data)
+            .sort(
+              (a, b) =>
+                (a.timestamp || 0) -
+                (b.timestamp || 0)
+            )
+            .slice(-30)
+        );
+      }
+    );
+}
+
+
+// =====================================================
+// UPLOAD PLAYER
+// =====================================================
+
+async function uploadCurrentPlayer() {
+
+  if (
+    !state.firebaseReady ||
+    !state.db ||
+    !state.uid ||
+    !state.me
+  ) {
+    return;
+  }
+
+  const playerRef =
+    ref(
+      state.db,
+      `worlds/${state.world}/players/${state.uid}`
+    );
+
+  await set(
+    playerRef,
+    {
+      uid: state.uid,
+
+      name:
+        state.me.name ||
+        "Khanza",
+
+      x:
+        state.me.x || 480,
+
+      y:
+        state.me.y || 300,
+
+      speed:
+        state.me.speed || 3,
+
+      character:
+        state.me.character ||
+        state.selectedCharacter,
+
+      emote:
+        state.me.emote ||
+        null,
+
+      online: true,
+
+      updatedAt:
+        Date.now()
+    }
+  );
+
+  onDisconnect(
+    playerRef
+  ).remove();
+}
+
+
+// =====================================================
+// WRITE PLAYER
+// =====================================================
+
+let lastPlayerWrite = 0;
+
+async function writePlayer() {
+
+  if (!state.me) return;
+
+  state.players[state.me.uid] = {
+    ...state.me
+  };
+
+  renderWorld();
+
+
+  // prevent too many Firebase writes
+  const now =
+    Date.now();
+
+  if (
+    now - lastPlayerWrite < 80
+  ) {
+    return;
+  }
+
+  lastPlayerWrite = now;
+
+  try {
+
+    await uploadCurrentPlayer();
+
+  } catch (error) {
+
+    console.warn(
+      "Could not update player:",
+      error
+    );
+  }
+}
+
+
+// =====================================================
+// CHANGE PLAYER NAME
+// =====================================================
+
+function setPlayerName(name) {
+
+  if (!state.me) return;
+
+  const cleanName =
+    String(name || "")
+      .trim()
+      .slice(0, 18);
+
+  if (!cleanName) return;
+
+  state.me.name =
+    cleanName;
+
+  state.players[state.me.uid] = {
+    ...state.me
+  };
+
+  writePlayer();
+
+  renderProfile();
+
+  toast(
+    `Hi, ${cleanName}! ♡`
+  );
+}
+
+
+// =====================================================
+// CHAT
+// =====================================================
+
+async function sendChat(message) {
+
+  if (!message) return;
+
+  const cleanMessage =
+    String(message)
+      .trim()
+      .slice(0, 120);
+
+  if (!cleanMessage) return;
+
+
+  // offline
+  if (
+    !state.firebaseReady ||
+    !state.db ||
+    !state.uid
+  ) {
+
+    addLocalChat(
+      cleanMessage
+    );
+
+    return;
+  }
+
+
+  try {
+
+    const chatRef =
+      ref(
+        state.db,
+        `worlds/${state.world}/chat`
+      );
+
+    const newChat =
+      push(chatRef);
+
+    await set(
+      newChat,
+      {
+        uid: state.uid,
+
+        name:
+          state.me?.name ||
+          "Player",
+
+        message:
+          cleanMessage,
+
+        timestamp:
+          Date.now()
+      }
+    );
+
+  } catch (error) {
+
+    console.error(
+      "Chat error:",
+      error
+    );
+  }
+}
+
+
+// =====================================================
+// LOCAL CHAT
+// =====================================================
+
+const localChat = [];
+
+function addLocalChat(message) {
+
+  localChat.push({
+
+    uid:
+      state.uid ||
+      "local",
+
+    name:
+      state.me?.name ||
+      "You",
+
+    message,
+
+    timestamp:
+      Date.now()
+  });
+
+  if (localChat.length > 30) {
+    localChat.shift();
+  }
+
+  renderChat(
+    localChat
+  );
+}
+
+
+// =====================================================
+// CHAT UI
+// =====================================================
+
+function renderChat(messages = []) {
+
+  const container =
+    $("#chatMessages");
+
+  if (!container) return;
+
+  container.innerHTML = "";
+
+  messages.forEach(chat => {
+
+    const message =
+      document.createElement("div");
+
+    message.className =
+      "chat-message";
+
+    message.innerHTML = `
+      <strong>
+        ${escapeHTML(chat.name || "Player")}
+      </strong>
+      <span>
+        ${escapeHTML(chat.message || "")}
+      </span>
+    `;
+
+    container.appendChild(
+      message
+    );
+  });
+
+  container.scrollTop =
+    container.scrollHeight;
+}
+
+
+// =====================================================
+// CHAT SEND BUTTON
+// =====================================================
+
+function bindChatUI() {
+
+  const input =
+    $("#chatInput");
+
+  const send =
+    $("#sendChatBtn");
+
+  if (!input || !send) return;
+
+
+  send.addEventListener(
+    "click",
+    () => {
+
+      const message =
+        input.value.trim();
+
+      if (!message) return;
+
+      sendChat(message);
+
+      input.value = "";
+    }
+  );
+
+
+  input.addEventListener(
+    "keydown",
+    event => {
+
+      if (
+        event.key === "Enter"
+      ) {
+
+        event.preventDefault();
+
+        send.click();
+      }
+    }
+  );
+}
+
+
+// =====================================================
+// FRIENDS
+// =====================================================
+
+function renderFriends() {
+
+  const container =
+    $("#friendsList");
+
+  if (!container) return;
+
+  container.innerHTML = "";
+
+
+  const players =
+    Object.values(
+      state.players || {}
+    );
+
+
+  const others =
+    players.filter(
+      player =>
+        player.uid !== state.uid
+    );
+
+
+  if (!others.length) {
+
+    container.innerHTML = `
+      <div class="empty-state">
+        <div>♡</div>
+        <p>No friends are here yet.</p>
+        <small>Invite someone to join your world ✦</small>
+      </div>
+    `;
+
+    return;
+  }
+
+
+  others.forEach(player => {
+
+    const card =
+      document.createElement("div");
+
+    card.className =
+      "friend-card";
+
+    card.innerHTML = `
+      <div class="friend-avatar">♡</div>
+
+      <div class="friend-info">
+        <strong>
+          ${escapeHTML(player.name || "Player")}
+        </strong>
+
+        <small>
+          ${player.online === false
+            ? "offline"
+            : "online ♡"}
+        </small>
+      </div>
+    `;
+
+    container.appendChild(
+      card
+    );
+  });
+}
+
+
+// =====================================================
+// CONNECTION STATUS
+// =====================================================
+
+function updateConnectionStatus(
+  online
+) {
+
+  const status =
+    $("#connectionStatus");
+
+  if (!status) return;
+
+  if (online) {
+
+    status.textContent =
+      "● Online";
+
+    status.classList.add(
+      "online"
+    );
+
+    status.classList.remove(
+      "offline"
+    );
+
+  } else {
+
+    status.textContent =
+      "● Offline";
+
+    status.classList.add(
+      "offline"
+    );
+
+    status.classList.remove(
+      "online"
+    );
+  }
+}
+
+
+// =====================================================
+// COUNTERS
+// =====================================================
+
+function updateCounters() {
+
+  const count =
+    Object.keys(
+      state.players || {}
+    ).length;
+
+
+  const playerCount =
+    $("#playerCount");
+
+  if (playerCount) {
+
+    playerCount.textContent =
+      `${count} player${count === 1 ? "" : "s"}`;
+  }
+}
+
+
+// =====================================================
+// MODALS
+// =====================================================
+
+function openModal(id) {
+
+  const modal =
+    document.getElementById(id);
+
+  if (!modal) return;
+
+  modal.classList.remove(
+    "hidden"
+  );
+
+  modal.classList.add(
+    "open"
+  );
+
+
+  if (
+    id === "profileModal"
+  ) {
+
+    renderProfile();
+  }
+
+  if (
+    id === "friendsModal"
+  ) {
+
+    renderFriends();
+  }
+}
+
+
+function closeModal(id) {
+
+  const modal =
+    document.getElementById(id);
+
+  if (!modal) return;
+
+  modal.classList.add(
+    "hidden"
+  );
+
+  modal.classList.remove(
+    "open"
+  );
+}
+
+
+function closeAllModals() {
+
+  document
+    .querySelectorAll(".modal")
+    .forEach(modal => {
+
+      modal.classList.add(
+        "hidden"
+      );
+
+      modal.classList.remove(
+        "open"
+      );
+    });
+}
+
+
+// =====================================================
+// MODAL CLICK OUTSIDE
+// =====================================================
+
+function bindModalUI() {
+
+  document
+    .querySelectorAll(".modal")
+    .forEach(modal => {
+
+      modal.addEventListener(
+        "click",
+        event => {
+
+          if (
+            event.target === modal
+          ) {
+
+            modal.classList.add(
+              "hidden"
+            );
+
+            modal.classList.remove(
+              "open"
+            );
+          }
+        }
+      );
+    });
+
+
+  document
+    .querySelectorAll(
+      "[data-close-modal]"
+    )
+    .forEach(button => {
+
+      button.addEventListener(
+        "click",
+        () => {
+
+          const id =
+            button.dataset.closeModal;
+
+          if (id) {
+            closeModal(id);
+          }
+        }
+      );
+    });
+}
+
+
+// =====================================================
+// TOAST
+// =====================================================
+
+let toastTimer = null;
+
+function toast(message) {
+
+  let element =
+    $("#toast");
+
+  if (!element) {
+
+    element =
+      document.createElement("div");
+
+    element.id =
+      "toast";
+
+    element.className =
+      "toast hidden";
+
+    document.body.appendChild(
+      element
+    );
+  }
+
+
+  element.textContent =
+    message;
+
+
+  element.classList.remove(
+    "hidden"
+  );
+
+  element.classList.add(
+    "show"
+  );
+
+
+  clearTimeout(
+    toastTimer
+  );
+
+
+  toastTimer =
+    setTimeout(() => {
+
+      element.classList.remove(
+        "show"
+      );
+
+      setTimeout(() => {
+
+        element.classList.add(
+          "hidden"
+        );
+
+      }, 250);
+
+    }, 2200);
+}
+
+
+// =====================================================
+// MUSIC
+// =====================================================
+
+function setupMusic() {
+
+  if (state.audio) {
+    return;
+  }
+
+  state.audio =
+    new Audio(
+      "./music/cozy-jazz.mp3"
+    );
+
+  state.audio.loop = true;
+
+  state.audio.volume =
+    0.35;
+}
+
+
+async function toggleMusic() {
+
+  setupMusic();
+
+  if (!state.audio) return;
+
+
+  if (
+    state.musicOn
+  ) {
+
+    state.audio.pause();
+
+    state.musicOn =
+      false;
+
+    updateMusicButton();
+
+    toast(
+      "Music off ♡"
+    );
+
+    return;
+  }
+
+
+  try {
+
+    await state.audio.play();
+
+    state.musicOn =
+      true;
+
+    updateMusicButton();
+
+    toast(
+      "Cozy Jazz playing ♪"
+    );
+
+  } catch (error) {
+
+    console.warn(
+      "Music blocked:",
+      error
+    );
+
+    toast(
+      "Tap music again to play ♪"
+    );
+  }
+}
+
+
+function updateMusicButton() {
+
+  const button =
+    $("#musicBtn");
+
+  if (!button) return;
+
+  button.textContent =
+    state.musicOn
+      ? "♫ Music On"
+      : "♫ Music";
+}
+
+
+// =====================================================
+// UPDATE WORLD / PLAYERS
+// =====================================================
+
+function updateOnlinePlayers() {
+
+  const count =
+    Object.keys(
+      state.players || {}
+    ).length;
+
+  const counter =
+    $("#onlineCount");
+
+  if (counter) {
+
+    counter.textContent =
+      count;
+  }
+}
+
+
+// =====================================================
+// KEYBOARD MOVEMENT SAFETY
+// =====================================================
+
+window.addEventListener(
+  "blur",
+  () => {
+
+    state.keys = {};
+  }
+);
+
+
+// =====================================================
+// CHARACTER PREVIEW BUTTON
+// =====================================================
+
+function bindCharacterPreview() {
+
+  const preview =
+    $("#previewCharacterBtn");
+
+  if (!preview) return;
+
+  preview.addEventListener(
+    "click",
+    () => {
+
+      renderCharacterPreview();
+
+      toast(
+        "This is your character ♡"
+      );
+    }
+  );
+}
+
+
+// =====================================================
+// AUTO BIND EXTRA UI
+// =====================================================
+
+function bindExtraUI() {
+
+  bindChatUI();
+
+  bindModalUI();
+
+  bindCharacterPreview();
+
+
+  // profile name
+  const nameInput =
+    $("#nameInput");
+
+  const saveName =
+    $("#saveNameBtn");
+
+  if (
+    nameInput &&
+    saveName
+  ) {
+
+    saveName.addEventListener(
+      "click",
+      () => {
+
+        setPlayerName(
+          nameInput.value
+        );
+      }
+    );
+  }
+
+
+  // back buttons
+  document
+    .querySelectorAll(
+      "[data-view]"
+    )
+    .forEach(button => {
+
+      button.addEventListener(
+        "click",
+        () => {
+
+          const view =
+            button.dataset.view;
+
+          if (view) {
+            showView(view);
+          }
+        }
+      );
+    });
+}
+
+
+// =====================================================
+// PATCH INITIAL UI
+// =====================================================
+
+const originalBindUI =
+  bindUI;
+
+
+// Re-bind additional elements
+// after the main UI is ready.
+
+setTimeout(() => {
+
+  bindExtraUI();
+
+  setupMusic();
+
+  updateMusicButton();
+
+}, 100);
+
+
+// =====================================================
+// UPDATE COUNTERS EACH FRAME
+// =====================================================
+
+setInterval(() => {
+
+  updateCounters();
+
+  updateOnlinePlayers();
+
+}, 1000);
+
+
+// =====================================================
+// START MAIWORLD
+// =====================================================
+
+init();
