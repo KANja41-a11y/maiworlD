@@ -1,14 +1,5 @@
 import { firebaseConfig, FIREBASE_READY } from "./firebase-config.js";
 
-/* =========================================================
-   MAIWORLD — FIXED SCRIPT
-   - Safe JSON loading
-   - Loading screen cannot stay forever
-   - Firebase cannot block the game
-   - Realtime multiplayer preserved
-   - Local demo fallback preserved
-   ========================================================= */
-
 const CDN = "https://www.gstatic.com/firebasejs/12.2.1/";
 
 const appPromise = FIREBASE_READY
@@ -26,16 +17,13 @@ const appPromise = FIREBASE_READY
 const $ = (s) => document.querySelector(s);
 const $$ = (s) => [...document.querySelectorAll(s)];
 
-const clamp = (n, a, b) => Math.max(a, Math.min(b, n));
+const clamp = (n, a, b) =>
+  Math.max(a, Math.min(b, n));
 
 const uid = () =>
   crypto.randomUUID
     ? crypto.randomUUID()
     : Math.random().toString(36).slice(2);
-
-/* =========================================================
-   STATE
-   ========================================================= */
 
 const state = {
   view: "home",
@@ -69,322 +57,214 @@ const state = {
   audio: null,
 
   lastSend: 0,
-
-  localDemo: true,
-  firebaseStarting: false
+  localDemo: true
 };
 
-/* =========================================================
-   CANVAS
-   ========================================================= */
-
-const gameCanvas = $("#gameCanvas");
-
-if (!gameCanvas) {
-  console.error("MAIWORLD ERROR: #gameCanvas tidak ditemukan.");
-}
-
-let ctx = gameCanvas
-  ? gameCanvas.getContext("2d")
-  : null;
+let ctx = $("#gameCanvas")?.getContext("2d");
 
 if (ctx) {
   ctx.imageSmoothingEnabled = false;
 }
 
-/* =========================================================
-   HELPERS
-   ========================================================= */
-
-function safeBootHide() {
-  const boot = $("#boot");
-
-  if (boot) {
-    boot.classList.add("hide");
-  }
-}
-
-function showError(message) {
-  console.error("MAIWORLD:", message);
-
-  const boot = $("#boot");
-
-  if (boot) {
-    boot.classList.add("hide");
-  }
-
-  toast(message);
-}
-
-function wait(ms) {
-  return new Promise((resolve) => setTimeout(resolve, ms));
-}
 
 /* =========================================================
-   JSON LOADER
-   ========================================================= */
+   JSON
+========================================================= */
 
 async function loadJSON(path) {
-  const controller = new AbortController();
+  const response = await fetch(path, {
+    cache: "no-store"
+  });
 
-  const timeout = setTimeout(() => {
-    controller.abort();
-  }, 8000);
-
-  try {
-    const response = await fetch(path, {
-      cache: "no-store",
-      signal: controller.signal
-    });
-
-    if (!response.ok) {
-      throw new Error(
-        `${path} gagal dimuat — HTTP ${response.status}`
-      );
-    }
-
-    const data = await response.json();
-
-    return data;
-  } catch (error) {
-    if (error.name === "AbortError") {
-      throw new Error(`${path} terlalu lama dimuat.`);
-    }
-
-    throw error;
-  } finally {
-    clearTimeout(timeout);
+  if (!response.ok) {
+    throw new Error(`Failed to load ${path}`);
   }
+
+  return response.json();
 }
 
-/* =========================================================
-   LOAD GAME DATA
-   ========================================================= */
-
-async function loadGameData() {
-  const files = {
-    worlds: "./data/world.json",
-    items: "./data/items.json",
-    characters: "./data/characters.json",
-    emotes: "./data/emotes.json"
-  };
-
-  const results = await Promise.allSettled([
-    loadJSON(files.worlds),
-    loadJSON(files.items),
-    loadJSON(files.characters),
-    loadJSON(files.emotes)
-  ]);
-
-  const [worlds, items, characters, emotes] = results;
-
-  if (worlds.status === "fulfilled") {
-    state.worlds = worlds.value;
-  } else {
-    console.error("world.json:", worlds.reason);
-    state.worlds = [];
-  }
-
-  if (items.status === "fulfilled") {
-    state.items = items.value;
-  } else {
-    console.error("items.json:", items.reason);
-    state.items = [];
-  }
-
-  if (characters.status === "fulfilled") {
-    state.characters = characters.value;
-  } else {
-    console.error("characters.json:", characters.reason);
-    state.characters = {
-      skins: [],
-      hair: [],
-      eyes: [],
-      mouths: [],
-      tops: [],
-      bottoms: [],
-      dresses: [],
-      shoes: [],
-      accessories: [],
-      bags: []
-    };
-  }
-
-  if (emotes.status === "fulfilled") {
-    state.emotes = emotes.value;
-  } else {
-    console.error("emotes.json:", emotes.reason);
-    state.emotes = [];
-  }
-
-  const failed = results.filter(
-    (result) => result.status === "rejected"
-  );
-
-  if (failed.length) {
-    console.warn(
-      `${failed.length} data file gagal dimuat. MAIWORLD tetap dilanjutkan.`
-    );
-  }
-}
 
 /* =========================================================
    INIT
-   ========================================================= */
+========================================================= */
 
 async function init() {
-  console.log("🌸 MAIWORLD starting...");
-
-  /* -----------------------------------------
-     1. Load JSON
-     ----------------------------------------- */
-
   try {
-    await loadGameData();
-  } catch (error) {
-    console.error("Data loading error:", error);
-  }
+    const [
+      worldData,
+      itemData,
+      characterData,
+      emoteData
+    ] = await Promise.all([
+      loadJSON("./data/world.json"),
+      loadJSON("./data/items.json"),
+      loadJSON("./data/characters.json"),
+      loadJSON("./data/emotes.json")
+    ]);
 
-  /* -----------------------------------------
-     2. Load saved profile
-     ----------------------------------------- */
+    /*
+      IMPORTANT:
+      world.json = { worlds: [...] }
+      items.json = { items: [...] }
+      emotes.json = { emotes: [...] }
 
-  try {
+      We normalize them here so the rest of the
+      game can work with normal arrays.
+    */
+
+    state.worlds = Array.isArray(worldData)
+      ? worldData
+      : worldData.worlds || [];
+
+    state.items = Array.isArray(itemData)
+      ? itemData
+      : itemData.items || [];
+
+    state.characters = characterData || {};
+
+    state.emotes = Array.isArray(emoteData)
+      ? emoteData
+      : emoteData.emotes || [];
+
+
+    /* Load saved profile */
+
     const saved = localStorage.getItem("maiworld-profile");
 
     if (saved) {
-      Object.assign(
-        state.config,
-        JSON.parse(saved)
-      );
+      try {
+        Object.assign(
+          state.config,
+          JSON.parse(saved)
+        );
+      } catch (error) {
+        console.warn(
+          "Could not read saved profile:",
+          error
+        );
+      }
     }
-  } catch (error) {
-    console.warn(
-      "Saved profile tidak bisa dibaca:",
-      error
-    );
-  }
 
-  /* -----------------------------------------
-     3. Render UI
-     ----------------------------------------- */
 
-  try {
+    /* Render everything */
+
     populateEditor();
     renderProfileEverywhere();
     renderWorldChoices();
     renderEmotes();
     renderWorld();
     drawHero();
+
+    /* Bind buttons BEFORE Firebase */
+
     bindUI();
+
+    /* Hide loading screen immediately */
+
+    hideBoot();
+
+    /* Start Firebase separately */
+
+    if (FIREBASE_READY) {
+      setupFirebase();
+    } else {
+      setConnection("Local demo");
+    }
+
+    /* Start game loop */
+
+    requestAnimationFrame(loop);
+
   } catch (error) {
+
     console.error(
-      "UI initialization error:",
+      "MAIWORLD initialization error:",
       error
     );
+
+    /*
+      Even if something goes wrong,
+      the buttons should still work.
+    */
+
+    try {
+      populateEditor();
+      renderProfileEverywhere();
+      bindUI();
+      drawHero();
+      renderWorld();
+      renderEmotes();
+      renderWorldChoices();
+    } catch (fallbackError) {
+      console.error(
+        "Fallback initialization error:",
+        fallbackError
+      );
+    }
+
+    hideBoot();
+
+    setConnection("Local demo");
+
+    requestAnimationFrame(loop);
   }
-
-  /* -----------------------------------------
-     4. HIDE LOADING SCREEN
-     
-     IMPORTANT:
-     Loading screen is hidden BEFORE Firebase.
-     Firebase can NEVER block the UI.
-     ----------------------------------------- */
-
-  setTimeout(() => {
-    safeBootHide();
-  }, 300);
-
-  /* -----------------------------------------
-     5. Create local player immediately
-     
-     This makes the game usable even while
-     Firebase is connecting.
-     ----------------------------------------- */
-
-  if (!state.me) {
-    createLocalPlayer();
-  }
-
-  setConnection(
-    FIREBASE_READY
-      ? "Connecting..."
-      : "Local demo"
-  );
-
-  /* -----------------------------------------
-     6. Start Firebase WITHOUT blocking UI
-     ----------------------------------------- */
-
-  if (FIREBASE_READY) {
-    setupFirebase()
-      .then(() => {
-        console.log("🌐 Firebase connected.");
-      })
-      .catch((error) => {
-        console.warn(
-          "Firebase startup failed:",
-          error
-        );
-
-        if (state.localDemo) {
-          setConnection("Local demo");
-        }
-      });
-  }
-
-  /* -----------------------------------------
-     7. Start game loop
-     ----------------------------------------- */
-
-  requestAnimationFrame(loop);
-
-  console.log("✨ MAIWORLD ready.");
 }
 
+
 /* =========================================================
-   UI
-   ========================================================= */
+   BOOT
+========================================================= */
+
+function hideBoot() {
+  const boot = $("#boot");
+
+  if (!boot) return;
+
+  boot.classList.add("hide");
+}
+
+
+/* =========================================================
+   UI EVENTS
+========================================================= */
 
 function bindUI() {
-  const playBtn = $("#playBtn");
-  const customizeBtn = $("#customizeBtn");
-  const profileBtn = $("#profileBtn");
-  const profileGameBtn = $("#profileGameBtn");
-  const worldBtn = $("#worldBtn");
-  const friendsBtn = $("#friendsBtn");
-  const closeSide = $("#closeSide");
-  const editNameBtn = $("#editNameBtn");
-  const saveProfileBtn = $("#saveProfile");
-  const chatForm = $("#chatForm");
-  const musicBtn = $("#musicBtn");
-  const mobileInteract = $("#mobileInteract");
-  const brandBtn = $("#brandBtn");
 
+  const playBtn = $("#playBtn");
   if (playBtn) {
     playBtn.onclick = () => enterGame();
   }
 
+
+  const customizeBtn = $("#customizeBtn");
   if (customizeBtn) {
     customizeBtn.onclick = () =>
       openModal("profileModal");
   }
 
+
+  const profileBtn = $("#profileBtn");
   if (profileBtn) {
     profileBtn.onclick = () =>
       openModal("profileModal");
   }
 
+
+  const profileGameBtn = $("#profileGameBtn");
   if (profileGameBtn) {
     profileGameBtn.onclick = () =>
       openModal("profileModal");
   }
 
+
+  const worldBtn = $("#worldBtn");
   if (worldBtn) {
     worldBtn.onclick = () =>
       openModal("worldModal");
   }
+
+
+  const friendsBtn = $("#friendsBtn");
 
   if (friendsBtn) {
     friendsBtn.onclick = () => {
@@ -393,24 +273,34 @@ function bindUI() {
     };
   }
 
+
+  const closeSide = $("#closeSide");
+
   if (closeSide) {
     closeSide.onclick = () => {
-      const layout = $(".game-layout");
-
-      if (layout) {
-        layout.classList.remove("chat-open");
-      }
+      $(".game-layout")?.classList.remove(
+        "chat-open"
+      );
     };
   }
+
+
+  const editNameBtn = $("#editNameBtn");
 
   if (editNameBtn) {
     editNameBtn.onclick = () =>
       openModal("profileModal");
   }
 
+
+  const saveProfileBtn = $("#saveProfile");
+
   if (saveProfileBtn) {
     saveProfileBtn.onclick = saveProfile;
   }
+
+
+  const chatForm = $("#chatForm");
 
   if (chatForm) {
     chatForm.onsubmit = (e) => {
@@ -426,38 +316,59 @@ function bindUI() {
     };
   }
 
+
+  const musicBtn = $("#musicBtn");
+
   if (musicBtn) {
     musicBtn.onclick = toggleMusic;
   }
+
+
+  const mobileInteract = $("#mobileInteract");
 
   if (mobileInteract) {
     mobileInteract.onclick = interact;
   }
 
-  $$(".mobile-controls [data-key]").forEach(
-    (button) => {
+
+  /* Mobile controls */
+
+  $$(".mobile-controls [data-key]")
+    .forEach((button) => {
+
       button.addEventListener(
         "touchstart",
         (e) => {
           e.preventDefault();
-          state.keys.add(button.dataset.key);
+
+          state.keys.add(
+            button.dataset.key
+          );
         },
         { passive: false }
       );
+
 
       button.addEventListener(
         "touchend",
         (e) => {
           e.preventDefault();
-          state.keys.delete(button.dataset.key);
+
+          state.keys.delete(
+            button.dataset.key
+          );
         },
         { passive: false }
       );
-    }
-  );
+
+    });
+
+
+  /* Keyboard */
 
   addEventListener("keydown", (e) => {
-    const allowed = [
+
+    const validKeys = [
       "ArrowUp",
       "ArrowDown",
       "ArrowLeft",
@@ -470,28 +381,46 @@ function bindUI() {
       "e"
     ];
 
-    if (!allowed.includes(e.key)) return;
+    if (!validKeys.includes(e.key)) {
+      return;
+    }
 
     state.keys.add(e.key);
 
     if (e.key.toLowerCase() === "e") {
       interact();
     }
+
   });
+
 
   addEventListener("keyup", (e) => {
     state.keys.delete(e.key);
   });
 
+
+  /* Modal close buttons */
+
   $$(".modal-x").forEach((button) => {
-    button.onclick = () =>
+
+    button.onclick = () => {
       closeModal(button.dataset.close);
+    };
+
   });
+
+
+  /* Brand */
+
+  const brandBtn = $("#brandBtn");
 
   if (brandBtn) {
     brandBtn.onclick = () =>
       showView("home");
   }
+
+
+  /* Character editor */
 
   [
     "skinSelect",
@@ -506,27 +435,37 @@ function bindUI() {
     "bagsSelect",
     "nameInput"
   ].forEach((id) => {
+
     const element = $("#" + id);
 
-    if (element) {
-      element.addEventListener(
-        "input",
-        previewEditor
-      );
-    }
+    if (!element) return;
+
+    element.addEventListener(
+      "input",
+      previewEditor
+    );
+
+    element.addEventListener(
+      "change",
+      previewEditor
+    );
+
   });
+
 }
+
 
 /* =========================================================
    VIEWS
-   ========================================================= */
+========================================================= */
 
 function showView(view) {
+
   state.view = view;
 
-  $$(".view").forEach((element) =>
-    element.classList.remove("active")
-  );
+  $$(".view").forEach((element) => {
+    element.classList.remove("active");
+  });
 
   const target = $("#" + view + "View");
 
@@ -535,30 +474,41 @@ function showView(view) {
   }
 }
 
+
+/* =========================================================
+   ENTER GAME
+========================================================= */
+
 function enterGame() {
+
   showView("game");
 
   if (!state.me) {
     createLocalPlayer();
   }
 
-  const layout = $(".game-layout");
+  $(".game-layout")?.classList.add(
+    "chat-open"
+  );
 
-  if (layout) {
-    layout.classList.add("chat-open");
+  setTimeout(() => {
 
-    setTimeout(() => {
-      layout.classList.remove("chat-open");
-    }, 700);
-  }
+    $(".game-layout")?.classList.remove(
+      "chat-open"
+    );
+
+  }, 700);
+
 }
 
+
 /* =========================================================
-   PLAYER
-   ========================================================= */
+   LOCAL PLAYER
+========================================================= */
 
 function createLocalPlayer() {
-  const player = {
+
+  state.me = {
     uid: "local-" + uid().slice(0, 8),
 
     ...state.config,
@@ -573,19 +523,26 @@ function createLocalPlayer() {
     lastSeen: Date.now()
   };
 
-  state.me = player;
-
-  state.players[player.uid] = player;
+  state.players[state.me.uid] =
+    state.me;
 
   updateCounts();
   renderPlayers();
+
 }
 
+
+/* =========================================================
+   CHARACTER EDITOR
+========================================================= */
+
 function populateEditor() {
-  if (!state.characters) return;
 
   const fill = (id, key) => {
-    const list = state.characters[key] || [];
+
+    const list =
+      state.characters?.[key] || [];
+
     const element = $("#" + id);
 
     if (!element) return;
@@ -593,17 +550,27 @@ function populateEditor() {
     element.innerHTML = list
       .map(
         (item) =>
-          `<option value="${item.id}">${item.name}</option>`
+          `<option value="${item.id}">
+            ${escapeHTML(item.name)}
+          </option>`
       )
       .join("");
 
-    const prop = id.replace("Select", "");
+    const prop =
+      id.replace("Select", "");
 
-    element.value =
-      state.config[prop] ||
-      list[0]?.id ||
-      "";
+    if (state.config[prop]) {
+      element.value =
+        state.config[prop];
+    }
+
+    if (!element.value && list[0]) {
+      element.value =
+        list[0].id;
+    }
+
   };
+
 
   fill("skinSelect", "skins");
   fill("hairSelect", "hair");
@@ -613,119 +580,108 @@ function populateEditor() {
   fill("topSelect", "tops");
   fill("bottomSelect", "bottoms");
   fill("dressSelect", "dresses");
-  fill("shoesSelect", "shoes");
 
+  fill("shoesSelect", "shoes");
   fill("accessoriesSelect", "accessories");
   fill("bagsSelect", "bags");
+
 
   const nameInput = $("#nameInput");
 
   if (nameInput) {
-    nameInput.value = state.config.name;
+    nameInput.value =
+      state.config.name;
   }
+
 }
 
-function previewEditor() {
-  const profileAvatar = $("#profileAvatar");
 
-  if (!profileAvatar) return;
+function previewEditor() {
+
+  const avatar =
+    $("#profileAvatar");
+
+  if (!avatar) return;
 
   const config = readEditor();
 
   drawAvatar(
-    profileAvatar,
+    avatar,
     config,
     3
   );
+
 }
+
 
 function readEditor() {
-  const getValue = (id, fallback = "") => {
-    const element = $("#" + id);
-
-    return element
-      ? element.value
-      : fallback;
-  };
 
   return {
+
     name:
-      getValue(
-        "nameInput",
-        state.config.name
-      ).trim() || "Mai",
+      $("#nameInput")?.value.trim()
+      || "Mai",
 
-    skin: getValue(
-      "skinSelect",
-      state.config.skin
-    ),
+    skin:
+      $("#skinSelect")?.value
+      || "peach",
 
-    hair: getValue(
-      "hairSelect",
-      state.config.hair
-    ),
+    hair:
+      $("#hairSelect")?.value
+      || "blonde",
 
-    eyes: getValue(
-      "eyesSelect",
-      state.config.eyes
-    ),
+    eyes:
+      $("#eyesSelect")?.value
+      || "sparkle",
 
-    mouths: getValue(
-      "mouthsSelect",
-      state.config.mouths
-    ),
+    mouths:
+      $("#mouthsSelect")?.value
+      || "smile",
 
-    top: getValue(
-      "topSelect",
-      state.config.top
-    ),
+    top:
+      $("#topSelect")?.value
+      || "teePink",
 
-    bottom: getValue(
-      "bottomSelect",
-      state.config.bottom
-    ),
+    bottom:
+      $("#bottomSelect")?.value
+      || "jeans",
 
-    dress: getValue(
-      "dressSelect",
-      state.config.dress
-    ),
+    dress:
+      $("#dressSelect")?.value
+      || "none",
 
-    shoes: getValue(
-      "shoesSelect",
-      state.config.shoes
-    ),
+    shoes:
+      $("#shoesSelect")?.value
+      || "sneakers",
 
-    accessories: getValue(
-      "accessoriesSelect",
-      state.config.accessories
-    ),
+    accessories:
+      $("#accessoriesSelect")?.value
+      || "none",
 
-    bags: getValue(
-      "bagsSelect",
-      state.config.bags
-    )
+    bags:
+      $("#bagsSelect")?.value
+      || "none"
+
   };
+
 }
 
+
 function saveProfile() {
+
   Object.assign(
     state.config,
     readEditor()
   );
 
-  try {
-    localStorage.setItem(
-      "maiworld-profile",
-      JSON.stringify(state.config)
-    );
-  } catch (error) {
-    console.warn(
-      "Profile tidak bisa disimpan:",
-      error
-    );
-  }
+  localStorage.setItem(
+    "maiworld-profile",
+    JSON.stringify(state.config)
+  );
+
 
   if (state.me) {
+
     Object.assign(
       state.me,
       state.config
@@ -735,7 +691,9 @@ function saveProfile() {
       state.me;
 
     writePlayer();
+
   }
+
 
   renderProfileEverywhere();
 
@@ -744,9 +702,16 @@ function saveProfile() {
   toast(
     "Your new look is ready ✨"
   );
+
 }
 
+
+/* =========================================================
+   PROFILE
+========================================================= */
+
 function renderProfileEverywhere() {
+
   const sideName = $("#sideName");
 
   if (sideName) {
@@ -754,9 +719,8 @@ function renderProfileEverywhere() {
       state.config.name;
   }
 
+
   const miniAvatar = $("#miniAvatar");
-  const sideAvatar = $("#sideAvatar");
-  const profileAvatar = $("#profileAvatar");
 
   if (miniAvatar) {
     drawAvatar(
@@ -766,6 +730,9 @@ function renderProfileEverywhere() {
     );
   }
 
+
+  const sideAvatar = $("#sideAvatar");
+
   if (sideAvatar) {
     drawAvatar(
       sideAvatar,
@@ -774,6 +741,10 @@ function renderProfileEverywhere() {
     );
   }
 
+
+  const profileAvatar =
+    $("#profileAvatar");
+
   if (profileAvatar) {
     drawAvatar(
       profileAvatar,
@@ -781,52 +752,78 @@ function renderProfileEverywhere() {
       3
     );
   }
+
 }
+
 
 /* =========================================================
    WORLDS
-   ========================================================= */
+========================================================= */
 
 function renderWorldChoices() {
-  const container = $("#worldChoices");
+
+  const container =
+    $("#worldChoices");
 
   if (!container) return;
 
-  container.innerHTML = state.worlds
-    .map(
-      (world) => `
-        <button
-          class="world-choice"
-          data-world="${escapeHTML(world.id)}"
-        >
-          <span class="emoji">${world.emoji}</span>
-          <strong>${escapeHTML(world.name)}</strong>
-          <small>${escapeHTML(world.description)}</small>
-        </button>
-      `
-    )
-    .join("");
+  container.innerHTML =
+    state.worlds
+      .map(
+        (world) => `
+          <button
+            class="world-choice"
+            data-world="${escapeHTML(world.id)}"
+          >
+            <span class="emoji">
+              ${world.emoji || "🌸"}
+            </span>
 
-  $$(".world-choice").forEach(
-    (button) => {
+            <strong>
+              ${escapeHTML(world.name || world.id)}
+            </strong>
+
+            <small>
+              ${escapeHTML(world.description || "")}
+            </small>
+          </button>
+        `
+      )
+      .join("");
+
+
+  $$(".world-choice")
+    .forEach((button) => {
+
       button.onclick = () => {
-        changeWorld(button.dataset.world);
+
+        changeWorld(
+          button.dataset.world
+        );
+
         closeModal("worldModal");
+
       };
-    }
-  );
+
+    });
+
 }
 
+
 function changeWorld(id) {
-  const world = state.worlds.find(
-    (item) => item.id === id
-  );
+
+  const world =
+    state.worlds.find(
+      (item) => item.id === id
+    );
 
   if (!world) return;
 
   state.world = id;
 
+
   if (state.me) {
+
     state.me.x =
       world.spawn?.[0] ?? 480;
 
@@ -834,11 +831,12 @@ function changeWorld(id) {
       world.spawn?.[1] ?? 360;
 
     writePlayer();
+
   }
 
-  const worldName = $("#worldName");
-  const worldTitle = $("#worldTitle");
-  const locationChip = $("#locationChip");
+
+  const worldName =
+    $("#worldName");
 
   if (worldName) {
     worldName.textContent =
@@ -847,85 +845,94 @@ function changeWorld(id) {
         .slice(-1)[0];
   }
 
+
+  const worldTitle =
+    $("#worldTitle");
+
   if (worldTitle) {
     worldTitle.textContent =
       world.name;
   }
+
+
+  const locationChip =
+    $("#locationChip");
 
   if (locationChip) {
     locationChip.textContent =
       world.name;
   }
 
+
   renderWorld();
 
   toast(
-    `Welcome to ${world.name} ${world.emoji}`
+    `Welcome to ${world.name} ${world.emoji || "✦"}`
   );
 
-  /*
-    Re-subscribe to Firebase after changing world.
-  */
-  if (!state.localDemo && state.firebase) {
-    listenWorld();
-  }
 }
+
 
 function renderWorld() {
   drawWorld();
 }
 
-function worldTheme(id) {
-  return (
-    {
-      plaza: [
-        "#ffd5e5",
-        "#f2dfff",
-        "#d5b5e8"
-      ],
-
-      park: [
-        "#d9f5d6",
-        "#c9ebff",
-        "#b7d99e"
-      ],
-
-      school: [
-        "#d7ecff",
-        "#eadcff",
-        "#b9cdea"
-      ],
-
-      cafe: [
-        "#ffe8c5",
-        "#f5d7e8",
-        "#d9b8a0"
-      ],
-
-      studio: [
-        "#eadcff",
-        "#f8d6eb",
-        "#c6a8db"
-      ],
-
-      beach: [
-        "#ffe3d4",
-        "#ffd0e5",
-        "#f0b88d"
-      ]
-    }[id] || [
-      "#ffd5e5",
-      "#f2dfff",
-      "#d5b5e8"
-    ]
-  );
-}
 
 /* =========================================================
    WORLD DRAWING
-   ========================================================= */
+========================================================= */
+
+function worldTheme(id) {
+
+  return {
+
+    plaza: [
+      "#ffd5e5",
+      "#f2dfff",
+      "#d5b5e8"
+    ],
+
+    park: [
+      "#d9f5d6",
+      "#c9ebff",
+      "#b7d99e"
+    ],
+
+    school: [
+      "#d7ecff",
+      "#eadcff",
+      "#b9cdea"
+    ],
+
+    cafe: [
+      "#ffe8c5",
+      "#f5d7e8",
+      "#d9b8a0"
+    ],
+
+    studio: [
+      "#eadcff",
+      "#f8d6eb",
+      "#c6a8db"
+    ],
+
+    beach: [
+      "#ffe3d4",
+      "#ffd0e5",
+      "#f0b88d"
+    ]
+
+  }[id] || [
+    "#ffd5e5",
+    "#f2dfff",
+    "#d5b5e8"
+  ];
+
+}
+
 
 function drawWorld() {
+
   if (!ctx) return;
 
   const W = 960;
@@ -966,10 +973,16 @@ function drawWorld() {
     H
   );
 
+
   ctx.fillStyle =
     "rgba(255,255,255,.45)";
 
-  for (let i = 0; i < 18; i++) {
+  for (
+    let i = 0;
+    i < 18;
+    i++
+  ) {
+
     const x =
       (i * 97 + 37) % W;
 
@@ -989,11 +1002,15 @@ function drawWorld() {
       1,
       1
     );
+
   }
+
 
   drawGround();
 
-  const id = state.world;
+  const id =
+    state.world;
+
 
   if (id === "park") {
     drawPark();
@@ -1009,23 +1026,20 @@ function drawWorld() {
     drawPlaza();
   }
 
+
   drawItems();
+
 
   Object.values(
     state.players
   ).forEach((player) => {
-    if (
-      player &&
-      Number.isFinite(player.x) &&
-      Number.isFinite(player.y)
-    ) {
-      drawPlayer(player);
-    }
+    drawPlayer(player);
   });
+
 }
 
+
 function drawGround() {
-  if (!ctx) return;
 
   ctx.fillStyle =
     "rgba(255,255,255,.38)";
@@ -1037,6 +1051,7 @@ function drawGround() {
     350
   );
 
+
   ctx.fillStyle =
     "rgba(164,121,151,.11)";
 
@@ -1045,20 +1060,26 @@ function drawGround() {
     x < 960;
     x += 48
   ) {
+
     for (
       let y = 250;
       y < 600;
       y += 48
     ) {
+
       ctx.fillRect(
         x,
         y,
         44,
         44
       );
+
     }
+
   }
+
 }
+
 
 function box(
   x,
@@ -1068,7 +1089,6 @@ function box(
   color,
   radius = 8
 ) {
-  if (!ctx) return;
 
   ctx.fillStyle = color;
 
@@ -1080,6 +1100,7 @@ function box(
   );
 
   if (radius) {
+
     ctx.fillStyle =
       "rgba(255,255,255,.18)";
 
@@ -1089,13 +1110,16 @@ function box(
       w,
       3
     );
+
   }
+
 }
 
+
 function tree(x, y) {
-  if (!ctx) return;
 
   ctx.fillStyle = "#8b5c59";
+
   ctx.fillRect(
     x + 19,
     y + 38,
@@ -1103,7 +1127,9 @@ function tree(x, y) {
     42
   );
 
+
   ctx.fillStyle = "#8fd2a1";
+
   ctx.fillRect(
     x + 5,
     y + 10,
@@ -1111,7 +1137,9 @@ function tree(x, y) {
     38
   );
 
+
   ctx.fillStyle = "#aee4b8";
+
   ctx.fillRect(
     x + 12,
     y,
@@ -1119,28 +1147,34 @@ function tree(x, y) {
     40
   );
 
+
   ctx.fillStyle = "#6fbc91";
+
   ctx.fillRect(
     x,
     y + 25,
     48,
     18
   );
+
 }
 
+
 function drawPark() {
-  if (!ctx) return;
 
   for (
     let x = 70;
     x < 900;
     x += 150
   ) {
+
     tree(
       x,
       205 + (x % 70)
     );
+
   }
+
 
   box(
     360,
@@ -1151,6 +1185,7 @@ function drawPark() {
     12
   );
 
+
   box(
     380,
     382,
@@ -1160,8 +1195,8 @@ function drawPark() {
     8
   );
 
-  ctx.fillStyle =
-    "#86cde0";
+
+  ctx.fillStyle = "#86cde0";
 
   ctx.beginPath();
 
@@ -1177,13 +1212,14 @@ function drawPark() {
 
   ctx.fill();
 
+
   for (
     let x = 100;
     x < 850;
     x += 85
   ) {
-    ctx.fillStyle =
-      "#ff9fbe";
+
+    ctx.fillStyle = "#ff9fbe";
 
     ctx.fillRect(
       x,
@@ -1192,8 +1228,7 @@ function drawPark() {
       6
     );
 
-    ctx.fillStyle =
-      "#ffe2a4";
+    ctx.fillStyle = "#ffe2a4";
 
     ctx.fillRect(
       x + 6,
@@ -1201,11 +1236,13 @@ function drawPark() {
       5,
       5
     );
+
   }
+
 }
 
+
 function drawSchool() {
-  if (!ctx) return;
 
   box(
     300,
@@ -1262,8 +1299,7 @@ function drawSchool() {
     35
   );
 
-  ctx.fillStyle =
-    "#fff";
+  ctx.fillStyle = "#fff";
 
   ctx.font =
     "16px 'Press Start 2P'";
@@ -1273,10 +1309,11 @@ function drawSchool() {
     430,
     140
   );
+
 }
 
+
 function drawCafe() {
-  if (!ctx) return;
 
   box(
     300,
@@ -1305,11 +1342,13 @@ function drawCafe() {
     10
   );
 
+
   for (
     let x = 120;
     x < 820;
     x += 170
   ) {
+
     box(
       x,
       400,
@@ -1327,11 +1366,13 @@ function drawCafe() {
       "#fff2d9",
       10
     );
+
   }
+
 }
 
+
 function drawStudio() {
-  if (!ctx) return;
 
   box(
     270,
@@ -1369,6 +1410,7 @@ function drawStudio() {
     5
   );
 
+
   const colors = [
     "#ff9fc5",
     "#b9a1e9",
@@ -1376,9 +1418,15 @@ function drawStudio() {
     "#9edfc2"
   ];
 
-  for (let i = 0; i < 8; i++) {
+
+  for (
+    let i = 0;
+    i < 8;
+    i++
+  ) {
+
     ctx.fillStyle =
-      colors[i % colors.length];
+      colors[i % 4];
 
     ctx.fillRect(
       300 + (i % 4) * 95,
@@ -1386,11 +1434,13 @@ function drawStudio() {
       55,
       42
     );
+
   }
+
 }
 
+
 function drawBeach() {
-  if (!ctx) return;
 
   ctx.fillStyle =
     "#f9b6cf";
@@ -1402,6 +1452,7 @@ function drawBeach() {
     210
   );
 
+
   ctx.fillStyle =
     "#f8df9d";
 
@@ -1411,6 +1462,7 @@ function drawBeach() {
     960,
     60
   );
+
 
   ctx.fillStyle =
     "#ffd7e8";
@@ -1427,21 +1479,27 @@ function drawBeach() {
 
   ctx.fill();
 
+
+  ctx.fillStyle = "#fff";
+
   for (
     let x = 100;
     x < 900;
     x += 180
   ) {
+
     ctx.fillText(
       "☁",
       x,
       300
     );
+
   }
+
 }
 
+
 function drawPlaza() {
-  if (!ctx) return;
 
   ctx.fillStyle =
     "#d8b9ef";
@@ -1458,8 +1516,8 @@ function drawPlaza() {
 
   ctx.fill();
 
-  ctx.fillStyle =
-    "#fff";
+
+  ctx.fillStyle = "#fff";
 
   ctx.fillRect(
     445,
@@ -1467,6 +1525,7 @@ function drawPlaza() {
     70,
     8
   );
+
 
   ctx.fillStyle =
     "#ff9fc5";
@@ -1478,6 +1537,7 @@ function drawPlaza() {
     15
   );
 
+
   tree(
     110,
     210
@@ -1488,6 +1548,7 @@ function drawPlaza() {
     210
   );
 
+
   box(
     370,
     160,
@@ -1496,6 +1557,7 @@ function drawPlaza() {
     "#fff7fb",
     16
   );
+
 
   ctx.fillStyle =
     "#ff8fb9";
@@ -1508,90 +1570,105 @@ function drawPlaza() {
     454,
     205
   );
+
 }
 
+
+/* =========================================================
+   WORLD ITEMS
+========================================================= */
+
+function getWorldSpots() {
+
+  return {
+
+    plaza: [
+      {
+        x: 200,
+        y: 390,
+        id: "swing"
+      },
+      {
+        x: 710,
+        y: 380,
+        id: "swing"
+      }
+    ],
+
+    park: [
+      {
+        x: 420,
+        y: 400,
+        id: "bench"
+      },
+      {
+        x: 780,
+        y: 410,
+        id: "flower"
+      }
+    ],
+
+    school: [
+      {
+        x: 250,
+        y: 350,
+        id: "locker"
+      },
+      {
+        x: 680,
+        y: 350,
+        id: "bell"
+      }
+    ],
+
+    cafe: [
+      {
+        x: 420,
+        y: 400,
+        id: "coffee"
+      },
+      {
+        x: 600,
+        y: 400,
+        id: "jukebox"
+      }
+    ],
+
+    studio: [
+      {
+        x: 210,
+        y: 360,
+        id: "easel"
+      },
+      {
+        x: 730,
+        y: 360,
+        id: "gallery"
+      }
+    ],
+
+    beach: [
+      {
+        x: 250,
+        y: 450,
+        id: "shell"
+      }
+    ]
+
+  }[state.world] || [];
+
+}
+
+
 function drawItems() {
-  if (!ctx) return;
 
   const spots =
-    {
-      plaza: [
-        {
-          x: 200,
-          y: 390,
-          id: "swing"
-        },
-        {
-          x: 710,
-          y: 380,
-          id: "swing"
-        }
-      ],
+    getWorldSpots();
 
-      park: [
-        {
-          x: 420,
-          y: 400,
-          id: "bench"
-        },
-        {
-          x: 780,
-          y: 410,
-          id: "flower"
-        }
-      ],
-
-      school: [
-        {
-          x: 250,
-          y: 350,
-          id: "locker"
-        },
-        {
-          x: 680,
-          y: 350,
-          id: "bell"
-        }
-      ],
-
-      cafe: [
-        {
-          x: 420,
-          y: 400,
-          id: "coffee"
-        },
-        {
-          x: 600,
-          y: 400,
-          id: "jukebox"
-        }
-      ],
-
-      studio: [
-        {
-          x: 210,
-          y: 360,
-          id: "easel"
-        },
-        {
-          x: 730,
-          y: 360,
-          id: "gallery"
-        }
-      ],
-
-      beach: [
-        {
-          x: 250,
-          y: 450,
-          id: "shell"
-        }
-      ]
-    }[state.world] || [];
 
   spots.forEach((spot) => {
-    ctx.fillStyle =
-      "#fff";
+
+    ctx.fillStyle = "#fff";
 
     ctx.fillRect(
       spot.x - 12,
@@ -1599,6 +1676,7 @@ function drawItems() {
       24,
       24
     );
+
 
     ctx.fillStyle =
       "#ff9fbe";
@@ -1609,6 +1687,7 @@ function drawItems() {
       12,
       12
     );
+
 
     ctx.fillStyle =
       "#8b7180";
@@ -1621,25 +1700,26 @@ function drawItems() {
       spot.x - 4,
       spot.y + 29
     );
+
   });
+
 }
+
 
 /* =========================================================
    PLAYER DRAWING
-   ========================================================= */
+========================================================= */
 
 function drawPlayer(player) {
-  if (!ctx || !player) return;
+
+  if (!player) return;
 
   const x =
-    Math.round(
-      Number(player.x) || 480
-    );
+    Math.round(player.x ?? 480);
 
   const y =
-    Math.round(
-      Number(player.y) || 360
-    );
+    Math.round(player.y ?? 360);
+
 
   ctx.save();
 
@@ -1647,6 +1727,7 @@ function drawPlayer(player) {
     x,
     y
   );
+
 
   ctx.fillStyle =
     "rgba(85,55,75,.15)";
@@ -1658,6 +1739,7 @@ function drawPlayer(player) {
     7
   );
 
+
   drawAvatar(
     ctx,
     player,
@@ -1665,26 +1747,27 @@ function drawPlayer(player) {
     true
   );
 
+
   ctx.restore();
 
-  ctx.fillStyle =
-    "#fff";
+
+  ctx.fillStyle = "#fff";
 
   ctx.strokeStyle =
     "rgba(100,70,90,.12)";
 
   ctx.lineWidth = 1;
 
+
   const name =
-    String(
-      player.name || "Mai"
-    );
+    player.name || "Mai";
 
   const width =
     Math.max(
       42,
       name.length * 6 + 18
     );
+
 
   ctx.fillRect(
     x - width / 2,
@@ -1693,6 +1776,7 @@ function drawPlayer(player) {
     20
   );
 
+
   ctx.strokeRect(
     x - width / 2,
     y - 65,
@@ -1700,14 +1784,14 @@ function drawPlayer(player) {
     20
   );
 
+
   ctx.fillStyle =
     "#5a4654";
 
   ctx.font =
     "bold 11px 'Baloo 2'";
 
-  ctx.textAlign =
-    "center";
+  ctx.textAlign = "center";
 
   ctx.fillText(
     name,
@@ -1715,9 +1799,14 @@ function drawPlayer(player) {
     y - 51
   );
 
-  ctx.textAlign =
-    "left";
+  ctx.textAlign = "left";
+
 }
+
+
+/* =========================================================
+   AVATAR
+========================================================= */
 
 function drawAvatar(
   target,
@@ -1725,17 +1814,26 @@ function drawAvatar(
   scale = 1,
   centered = false
 ) {
-  if (!target || !player) return;
+
+  if (!target || !player) {
+    return;
+  }
+
 
   const isCanvas =
     target instanceof HTMLCanvasElement;
+
 
   const canvasContext =
     isCanvas
       ? target.getContext("2d")
       : target;
 
-  if (!canvasContext) return;
+
+  if (!canvasContext) {
+    return;
+  }
+
 
   const W =
     isCanvas
@@ -1747,35 +1845,38 @@ function drawAvatar(
       ? target.height
       : 96;
 
-  const c =
-    canvasContext;
 
-  c.clearRect(
+  canvasContext.clearRect(
     0,
     0,
     W,
     H
   );
 
-  c.imageSmoothingEnabled =
+
+  canvasContext.imageSmoothingEnabled =
     false;
 
-  c.save();
+
+  canvasContext.save();
+
 
   if (centered) {
-    c.translate(
+    canvasContext.translate(
       0,
       0
     );
   } else {
-    c.translate(
+    canvasContext.translate(
       W / 2,
       H / 2
     );
   }
 
+
   const s =
     scale * 10;
+
 
   const skinColors = {
     peach: "#f5b99d",
@@ -1784,57 +1885,67 @@ function drawAvatar(
     mocha: "#9f6758"
   };
 
+
   const skin =
-    skinColors[player.skin] ||
-    "#f5b99d";
+    skinColors[player.skin]
+    || "#f5b99d";
 
-  /* shadow */
 
-  c.fillStyle =
+  /* Shadow */
+
+  canvasContext.fillStyle =
     "#6e5962";
 
-  c.fillRect(
-    (-7 * s) / 2,
-    (11 * s) / 3,
+  canvasContext.fillRect(
+    -7 * s / 2,
+    11 * s / 3,
     7 * s,
-    (2 * s) / 3
+    2 * s / 3
   );
 
-  /* legs */
+
+  /* Legs */
+
+  const bottomColors = {
+    jeans: "#6f9ac8",
+    skirt: "#f18db1",
+    shorts: "#f2cfa8",
+    wide: "#8c7cb8",
+    cargo: "#a5b18d",
+    pleated: "#f0a8c7"
+  };
+
 
   const bottom =
     player.dress !== "none"
       ? player.dress
-      : {
-          jeans: "#6f9ac8",
-          skirt: "#f18db1",
-          shorts: "#f2cfa8",
-          wide: "#8c7cb8",
-          cargo: "#a5b18d",
-          pleated: "#f0a8c7"
-        }[player.bottom] ||
-        "#6f9ac8";
+      : bottomColors[player.bottom]
+        || "#6f9ac8";
 
-  c.fillStyle =
+
+  canvasContext.fillStyle =
     bottom;
 
-  c.fillRect(
+
+  canvasContext.fillRect(
     -2.5 * s,
     5 * s,
     2 * s,
     6 * s
   );
 
-  c.fillRect(
+
+  canvasContext.fillRect(
     0.5 * s,
     5 * s,
     2 * s,
     6 * s
   );
 
-  /* shoes */
 
-  const shoes = {
+  /* Shoes */
+
+  const shoeColors = {
     sneakers: "#ff9fc5",
     mary: "#7e6c9c",
     boots: "#c69ae2",
@@ -1843,25 +1954,33 @@ function drawAvatar(
     platform: "#d77fa8"
   };
 
-  c.fillStyle =
-    shoes[player.shoes] ||
-    "#ff9fc5";
 
-  c.fillRect(
+  const shoe =
+    shoeColors[player.shoes]
+    || "#ff9fc5";
+
+
+  canvasContext.fillStyle =
+    shoe;
+
+
+  canvasContext.fillRect(
     -3 * s,
     10 * s,
     3 * s,
     1.7 * s
   );
 
-  c.fillRect(
+
+  canvasContext.fillRect(
     0,
     10 * s,
     3 * s,
     1.7 * s
   );
 
-  /* outfit */
+
+  /* Outfit */
 
   const dressColors = {
     strawberry: "#ff94b9",
@@ -1869,8 +1988,10 @@ function drawAvatar(
     cloud: "#b9dff2"
   };
 
+
   const dress =
     dressColors[player.dress];
+
 
   const topColors = {
     teePink: "#ff9fc5",
@@ -1879,61 +2000,71 @@ function drawAvatar(
     cardi: "#f2b7a6"
   };
 
-  c.fillStyle =
-    dress ||
-    topColors[player.top] ||
-    "#ff9fc5";
+
+  canvasContext.fillStyle =
+    dress
+    || topColors[player.top]
+    || "#ff9fc5";
+
 
   if (dress) {
-    c.fillRect(
+
+    canvasContext.fillRect(
       -5 * s,
       0,
       10 * s,
       7 * s
     );
+
   } else {
-    c.fillRect(
+
+    canvasContext.fillRect(
       -5 * s,
       0,
       10 * s,
       6 * s
     );
 
-    c.fillRect(
+    canvasContext.fillRect(
       -7 * s,
       1 * s,
       2 * s,
       4 * s
     );
 
-    c.fillRect(
+    canvasContext.fillRect(
       5 * s,
       1 * s,
       2 * s,
       4 * s
     );
+
   }
 
-  /* head */
 
-  c.fillStyle =
+  /* Head */
+
+  canvasContext.fillStyle =
     skin;
 
-  c.fillRect(
+
+  canvasContext.fillRect(
     -5 * s,
     -9 * s,
     10 * s,
     10 * s
   );
 
-  c.fillRect(
+
+  canvasContext.fillRect(
     -4 * s,
     -10 * s,
     8 * s,
     12 * s
   );
 
-  /* hair */
+
+  /* Hair */
 
   const hairColors = {
     blonde: "#f2c477",
@@ -1942,367 +2073,415 @@ function drawAvatar(
     pink: "#e99dc5"
   };
 
-  c.fillStyle =
-    hairColors[player.hair] ||
-    "#f2c477";
 
-  c.fillRect(
+  const hair =
+    hairColors[player.hair]
+    || "#f2c477";
+
+
+  canvasContext.fillStyle =
+    hair;
+
+
+  canvasContext.fillRect(
     -6 * s,
     -11 * s,
     12 * s,
     5 * s
   );
 
-  c.fillRect(
+  canvasContext.fillRect(
     -6 * s,
     -7 * s,
     3 * s,
     9 * s
   );
 
-  c.fillRect(
+  canvasContext.fillRect(
     3 * s,
     -7 * s,
     3 * s,
     9 * s
   );
 
-  c.fillRect(
+  canvasContext.fillRect(
     -4 * s,
     -12 * s,
     8 * s,
     3 * s
   );
 
-  /* eyes */
 
-  c.fillStyle =
+  /* Eyes */
+
+  canvasContext.fillStyle =
     "#4b3945";
 
+
   const eye =
-    player.eyes ||
-    "sparkle";
+    player.eyes || "sparkle";
+
 
   if (eye === "sleepy") {
-    c.fillRect(
+
+    canvasContext.fillRect(
       -3 * s,
       -4 * s,
       2 * s,
       1 * s
     );
 
-    c.fillRect(
+    canvasContext.fillRect(
       1 * s,
       -4 * s,
       2 * s,
       1 * s
     );
+
   } else if (eye === "heart") {
-    c.fillStyle =
+
+    canvasContext.fillStyle =
       "#e8789f";
 
-    c.fillRect(
+    canvasContext.fillRect(
       -3 * s,
       -5 * s,
       2 * s,
       2 * s
     );
 
-    c.fillRect(
+    canvasContext.fillRect(
       1 * s,
       -5 * s,
       2 * s,
       2 * s
     );
+
   } else if (eye === "wink") {
-    c.fillRect(
+
+    canvasContext.fillRect(
       -3 * s,
       -4 * s,
       2 * s,
       1 * s
     );
 
-    c.fillRect(
+    canvasContext.fillRect(
       1 * s,
       -5 * s,
       2 * s,
       2 * s
     );
+
   } else {
-    c.fillRect(
+
+    canvasContext.fillRect(
       -3 * s,
       -5 * s,
       1.5 * s,
       2 * s
     );
 
-    c.fillRect(
+    canvasContext.fillRect(
       1.5 * s,
       -5 * s,
       1.5 * s,
       2 * s
     );
 
-    c.fillStyle =
+
+    canvasContext.fillStyle =
       "#fff";
 
-    c.fillRect(
+    canvasContext.fillRect(
       -2.7 * s,
       -5 * s,
       0.7 * s,
       0.7 * s
     );
 
-    c.fillRect(
+    canvasContext.fillRect(
       1.8 * s,
       -5 * s,
       0.7 * s,
       0.7 * s
     );
+
   }
 
-  /* blush */
 
-  c.fillStyle =
+  /* Cheeks */
+
+  canvasContext.fillStyle =
     "#ef8ca4";
 
-  c.fillRect(
+  canvasContext.fillRect(
     -4 * s,
     -2 * s,
     2 * s,
     1 * s
   );
 
-  c.fillRect(
+  canvasContext.fillRect(
     2 * s,
     -2 * s,
     2 * s,
     1 * s
   );
 
-  /* mouth */
 
-  c.fillStyle =
+  /* Mouth */
+
+  canvasContext.fillStyle =
     "#8c5669";
 
+
   const mouth =
-    player.mouths ||
-    "smile";
+    player.mouths || "smile";
+
 
   if (mouth === "open") {
-    c.fillRect(
+
+    canvasContext.fillRect(
       -1.5 * s,
       -1 * s,
       3 * s,
       2 * s
     );
+
   } else if (mouth === "cat") {
-    c.fillRect(
+
+    canvasContext.fillRect(
       -2 * s,
       -1 * s,
       1 * s,
       1 * s
     );
 
-    c.fillRect(
+    canvasContext.fillRect(
       1 * s,
       -1 * s,
       1 * s,
       1 * s
     );
 
-    c.fillRect(
+    canvasContext.fillRect(
       -1 * s,
       0,
       2 * s,
       1 * s
     );
+
   } else if (mouth === "pout") {
-    c.fillRect(
+
+    canvasContext.fillRect(
       -2 * s,
       0,
       4 * s,
       1 * s
     );
+
   } else {
-    c.fillRect(
+
+    canvasContext.fillRect(
       -1 * s,
       -1 * s,
       2 * s,
       1 * s
     );
+
   }
 
-  /* accessories */
+
+  /* Accessories */
 
   const accessory =
-    player.accessories ||
-    "none";
+    player.accessories || "none";
+
 
   if (accessory === "bear") {
-    c.fillStyle =
+
+    canvasContext.fillStyle =
       "#c99472";
 
-    c.fillRect(
+    canvasContext.fillRect(
       -7 * s,
       -10 * s,
       3 * s,
       3 * s
     );
 
-    c.fillRect(
+    canvasContext.fillRect(
       4 * s,
       -10 * s,
       3 * s,
       3 * s
     );
+
   }
+
 
   if (accessory === "cat") {
-    c.fillStyle =
+
+    canvasContext.fillStyle =
       "#c78ab1";
 
-    c.fillRect(
+    canvasContext.fillRect(
       -7 * s,
       -11 * s,
       3 * s,
       4 * s
     );
 
-    c.fillRect(
+    canvasContext.fillRect(
       4 * s,
       -11 * s,
       3 * s,
       4 * s
     );
+
   }
 
+
   if (accessory === "bow") {
-    c.fillStyle =
+
+    canvasContext.fillStyle =
       "#ff7fab";
 
-    c.fillRect(
+    canvasContext.fillRect(
       -8 * s,
       -5 * s,
       3 * s,
       3 * s
     );
 
-    c.fillRect(
+    canvasContext.fillRect(
       5 * s,
       -5 * s,
       3 * s,
       3 * s
     );
 
-    c.fillRect(
+    canvasContext.fillRect(
       -1 * s,
       -4 * s,
       2 * s,
       2 * s
     );
+
   }
 
+
   if (accessory === "flower") {
-    c.fillStyle =
+
+    canvasContext.fillStyle =
       "#ffd66f";
 
-    c.fillRect(
+    canvasContext.fillRect(
       5 * s,
       -8 * s,
       2 * s,
       2 * s
     );
 
-    c.fillStyle =
+    canvasContext.fillStyle =
       "#ff9fc5";
 
-    c.fillRect(
+    canvasContext.fillRect(
       6 * s,
       -9 * s,
       2 * s,
       2 * s
     );
+
   }
 
+
   if (accessory === "crown") {
-    c.fillStyle =
+
+    canvasContext.fillStyle =
       "#ffd66f";
 
-    c.fillRect(
+    canvasContext.fillRect(
       -4 * s,
       -14 * s,
       8 * s,
       3 * s
     );
 
-    c.fillRect(
+    canvasContext.fillRect(
       -3 * s,
       -16 * s,
       2 * s,
       3 * s
     );
 
-    c.fillRect(
+    canvasContext.fillRect(
       1 * s,
       -16 * s,
       2 * s,
       3 * s
     );
+
   }
 
+
   if (accessory === "glasses") {
-    c.strokeStyle =
+
+    canvasContext.strokeStyle =
       "#7f6c7b";
 
-    c.lineWidth =
+    canvasContext.lineWidth =
       Math.max(
         1,
         s / 3
       );
 
-    c.strokeRect(
+    canvasContext.strokeRect(
       -4 * s,
       -6 * s,
       3 * s,
       3 * s
     );
 
-    c.strokeRect(
+    canvasContext.strokeRect(
       1 * s,
       -6 * s,
       3 * s,
       3 * s
     );
 
-    c.beginPath();
+    canvasContext.beginPath();
 
-    c.moveTo(
+    canvasContext.moveTo(
       -1 * s,
       -4.5 * s
     );
 
-    c.lineTo(
+    canvasContext.lineTo(
       1 * s,
       -4.5 * s
     );
 
-    c.stroke();
+    canvasContext.stroke();
+
   }
 
+
   if (accessory === "headphones") {
-    c.strokeStyle =
+
+    canvasContext.strokeStyle =
       "#9a7cc7";
 
-    c.lineWidth =
+    canvasContext.lineWidth =
       Math.max(
         1,
         s / 2
       );
 
-    c.beginPath();
+    canvasContext.beginPath();
 
-    c.arc(
+    canvasContext.arc(
       0,
       -4 * s,
       7 * s,
@@ -2310,70 +2489,81 @@ function drawAvatar(
       0
     );
 
-    c.stroke();
+    canvasContext.stroke();
 
-    c.fillStyle =
+
+    canvasContext.fillStyle =
       "#9a7cc7";
 
-    c.fillRect(
+    canvasContext.fillRect(
       -7 * s,
       -5 * s,
       2 * s,
       4 * s
     );
 
-    c.fillRect(
+    canvasContext.fillRect(
       5 * s,
       -5 * s,
       2 * s,
       4 * s
     );
+
   }
 
-  /* bag */
+
+  /* Bag */
 
   const bag =
-    player.bags ||
-    "none";
+    player.bags || "none";
+
 
   if (bag !== "none") {
-    c.fillStyle =
+
+    canvasContext.fillStyle =
       bag === "heartbag"
         ? "#ff91b8"
         : bag === "teddy"
-        ? "#b98970"
-        : bag === "backpack"
-        ? "#8fb8df"
-        : "#c8a9ee";
+          ? "#b98970"
+          : bag === "backpack"
+            ? "#8fb8df"
+            : "#c8a9ee";
 
-    c.fillRect(
+    canvasContext.fillRect(
       6 * s,
       2 * s,
       3 * s,
       5 * s
     );
+
   }
 
-  c.restore();
+
+  canvasContext.restore();
+
 }
+
 
 /* =========================================================
    HERO
-   ========================================================= */
+========================================================= */
 
 function drawHero() {
-  const heroCanvas =
+
+  const canvas =
     $("#heroCanvas");
 
-  if (!heroCanvas) return;
+  if (!canvas) return;
 
   const hero =
-    heroCanvas.getContext("2d");
+    canvas.getContext("2d");
 
   if (!hero) return;
 
+
   hero.imageSmoothingEnabled =
     false;
+
 
   hero.clearRect(
     0,
@@ -2381,6 +2571,7 @@ function drawHero() {
     620,
     520
   );
+
 
   hero.fillStyle =
     "#ffd7e7";
@@ -2392,6 +2583,7 @@ function drawHero() {
     130
   );
 
+
   hero.fillStyle =
     "#e4c8f6";
 
@@ -2402,11 +2594,13 @@ function drawHero() {
     30
   );
 
+
   for (
     let x = 40;
     x < 600;
     x += 85
   ) {
+
     hero.fillStyle =
       "#fff";
 
@@ -2426,7 +2620,9 @@ function drawHero() {
       35,
       20
     );
+
   }
+
 
   hero.save();
 
@@ -2443,65 +2639,83 @@ function drawHero() {
   );
 
   hero.restore();
+
 }
+
 
 /* =========================================================
    GAME LOOP
-   ========================================================= */
+========================================================= */
 
 function loop(time) {
+
   if (
-    state.view === "game" &&
-    state.me
+    state.view === "game"
+    && state.me
   ) {
+
     let dx = 0;
     let dy = 0;
 
+
     if (
-      state.keys.has("ArrowLeft") ||
-      state.keys.has("a")
+      state.keys.has("ArrowLeft")
+      || state.keys.has("a")
     ) {
       dx--;
     }
 
+
     if (
-      state.keys.has("ArrowRight") ||
-      state.keys.has("d")
+      state.keys.has("ArrowRight")
+      || state.keys.has("d")
     ) {
       dx++;
     }
 
+
     if (
-      state.keys.has("ArrowUp") ||
-      state.keys.has("w")
+      state.keys.has("ArrowUp")
+      || state.keys.has("w")
     ) {
       dy--;
     }
 
+
     if (
-      state.keys.has("ArrowDown") ||
-      state.keys.has("s")
+      state.keys.has("ArrowDown")
+      || state.keys.has("s")
     ) {
       dy++;
     }
 
+
     if (dx || dy) {
+
       const length =
-        Math.hypot(dx, dy) || 1;
+        Math.hypot(
+          dx,
+          dy
+        ) || 1;
 
-      state.me.x = clamp(
-        state.me.x +
-          (dx / length) * 2.5,
-        35,
-        925
-      );
 
-      state.me.y = clamp(
-        state.me.y +
-          (dy / length) * 2.5,
-        285,
-        565
-      );
+      state.me.x =
+        clamp(
+          state.me.x
+            + (dx / length) * 2.5,
+          35,
+          925
+        );
+
+
+      state.me.y =
+        clamp(
+          state.me.y
+            + (dy / length) * 2.5,
+          285,
+          565
+        );
+
 
       state.me.direction =
         Math.abs(dx) >
@@ -2510,27 +2724,35 @@ function loop(time) {
             ? "right"
             : "left"
           : dy > 0
-          ? "down"
-          : "up";
+            ? "down"
+            : "up";
+
 
       state.me.animation =
         "walk";
 
+
       if (
-        time - state.lastSend >
-        90
+        time - state.lastSend > 90
       ) {
+
         writePlayer();
 
         state.lastSend =
           time;
+
       }
+
     } else {
+
       state.me.animation =
         "idle";
+
     }
 
+
     if (ctx) {
+
       ctx.clearRect(
         0,
         0,
@@ -2539,97 +2761,103 @@ function loop(time) {
       );
 
       drawWorld();
+
     }
+
   }
 
+
   requestAnimationFrame(loop);
+
 }
 
+
 /* =========================================================
-   INTERACTIONS
-   ========================================================= */
+   INTERACTION
+========================================================= */
 
 function nearestItem() {
-  if (!state.me) return null;
+
+  if (!state.me) {
+    return null;
+  }
+
 
   const list =
-    {
-      plaza: [
-        [200, 390, "swing"],
-        [710, 380, "swing"]
-      ],
+    getWorldSpots();
 
-      park: [
-        [420, 400, "bench"],
-        [780, 410, "flower"]
-      ],
-
-      school: [
-        [250, 350, "locker"],
-        [680, 350, "bell"]
-      ],
-
-      cafe: [
-        [420, 400, "coffee"],
-        [600, 400, "jukebox"]
-      ],
-
-      studio: [
-        [210, 360, "easel"],
-        [730, 360, "gallery"]
-      ],
-
-      beach: [
-        [250, 450, "shell"]
-      ]
-    }[state.world] || [];
 
   let best = null;
   let bestDistance = 70;
 
-  for (
-    const [x, y, id] of list
-  ) {
+
+  for (const spot of list) {
+
     const distance =
       Math.hypot(
-        state.me.x - x,
-        state.me.y - y
+        state.me.x - spot.x,
+        state.me.y - spot.y
       );
+
 
     if (
       distance < bestDistance
     ) {
-      best = id;
-      bestDistance = distance;
+
+      best = spot.id;
+
+      bestDistance =
+        distance;
+
     }
+
   }
 
+
   return best;
+
 }
 
+
 function interact() {
+
+  if (!state.me) {
+    return;
+  }
+
+
   const id =
     nearestItem();
 
+
   if (!id) {
+
     toast(
       "Walk closer to something cute ✦"
     );
 
     return;
+
   }
+
 
   const item =
     state.items.find(
       (x) => x.id === id
     );
 
-  if (!item) return;
+
+  if (!item) {
+    return;
+  }
+
 
   const bubble =
     $("#interactionBubble");
 
+
   if (bubble) {
+
     bubble.textContent =
       item.message;
 
@@ -2643,26 +2871,34 @@ function interact() {
 
     interact.timer =
       setTimeout(() => {
+
         bubble.classList.add(
           "hidden"
         );
+
       }, 3000);
+
   }
+
 
   sendChat(
     `♡ ${item.message}`
   );
+
 }
+
 
 /* =========================================================
    EMOTES
-   ========================================================= */
+========================================================= */
 
 function renderEmotes() {
+
   const bar =
     $("#emoteBar");
 
   if (!bar) return;
+
 
   bar.innerHTML =
     state.emotes
@@ -2680,28 +2916,42 @@ function renderEmotes() {
       )
       .join("");
 
-  $$(".emote-btn").forEach(
-    (button) => {
-      button.onclick = () =>
+
+  $$(".emote-btn")
+    .forEach((button) => {
+
+      button.onclick = () => {
+
         doEmote(
           button.dataset.emote
         );
-    }
-  );
+
+      };
+
+    });
+
 }
 
+
 function doEmote(id) {
+
   const emote =
     state.emotes.find(
       (item) => item.id === id
     );
 
-  if (!emote) return;
+
+  if (!emote) {
+    return;
+  }
+
 
   const bubble =
     $("#interactionBubble");
 
+
   if (bubble) {
+
     bubble.textContent =
       emote.emoji +
       " " +
@@ -2711,68 +2961,62 @@ function doEmote(id) {
       "hidden"
     );
 
+
     clearTimeout(
       doEmote.timer
     );
 
+
     doEmote.timer =
       setTimeout(() => {
+
         bubble.classList.add(
           "hidden"
         );
+
       }, 1500);
+
   }
+
 
   sendChat(
     `${emote.emoji} ${emote.label}`
   );
 
+
   if (state.me) {
     state.me.emote =
       id;
   }
+
 }
+
 
 /* =========================================================
    FIREBASE
-   ========================================================= */
+========================================================= */
 
 async function setupFirebase() {
-  if (
-    !FIREBASE_READY ||
-    state.firebaseStarting
-  ) {
-    return;
-  }
-
-  state.firebaseStarting = true;
 
   try {
-    console.log(
-      "🔥 Connecting Firebase..."
-    );
 
     const modules =
-      await Promise.race([
-        appPromise,
-        wait(10000).then(() => {
-          throw new Error(
-            "Firebase modules timeout."
-          );
-        })
-      ]);
+      await appPromise;
+
 
     if (!modules) {
-      throw new Error(
-        "Firebase modules unavailable."
-      );
+      setConnection("Local demo");
+      return;
     }
+
 
     const {
       initializeApp,
       getApps,
+
       getAuth,
       signInAnonymously,
+
       getDatabase,
       ref,
       set,
@@ -2781,6 +3025,7 @@ async function setupFirebase() {
       push
     } = modules;
 
+
     const app =
       getApps().length
         ? getApps()[0]
@@ -2788,11 +3033,13 @@ async function setupFirebase() {
             firebaseConfig
           );
 
+
     const auth =
       getAuth(app);
 
     const db =
       getDatabase(app);
+
 
     state.firebase = {
       auth,
@@ -2804,26 +3051,15 @@ async function setupFirebase() {
       push
     };
 
-    /* -----------------------------------------
-       Anonymous login
-       ----------------------------------------- */
 
     const credential =
-      await Promise.race([
-        signInAnonymously(auth),
-        wait(10000).then(() => {
-          throw new Error(
-            "Firebase login timeout."
-          );
-        })
-      ]);
+      await signInAnonymously(auth);
 
-    /* -----------------------------------------
-       Replace local player with Firebase player
-       ----------------------------------------- */
 
     state.me = {
-      uid: credential.user.uid,
+
+      uid:
+        credential.user.uid,
 
       ...state.config,
 
@@ -2835,97 +3071,113 @@ async function setupFirebase() {
 
       online: true,
       lastSeen: Date.now()
+
     };
+
 
     state.localDemo = false;
 
-    state.players = {
-      [state.me.uid]:
-        state.me
-    };
-
-    updateCounts();
 
     setConnection(
       "Online world"
     );
 
-    /* -----------------------------------------
-       Player reference
-       ----------------------------------------- */
 
-    const playerRef =
-      ref(
-        db,
-        `worlds/${state.world}/players/${state.me.uid}`
-      );
-
-    await set(
-      playerRef,
-      state.me
-    );
-
-    onDisconnect(
-      playerRef
-    ).remove();
-
-    /* -----------------------------------------
-       Listen to world
-       ----------------------------------------- */
+    await uploadCurrentPlayer();
 
     listenWorld();
 
-    renderPlayers();
 
-    console.log(
-      "🌐 Firebase ONLINE"
-    );
   } catch (error) {
+
     console.warn(
-      "Firebase connection failed:",
+      "Firebase unavailable:",
       error
     );
 
+
+    state.firebase = null;
     state.localDemo = true;
 
-    state.firebase =
-      null;
 
     setConnection(
       "Local demo"
     );
 
-    /*
-      IMPORTANT:
-      Do not create a second player if
-      a local player already exists.
-    */
 
     if (!state.me) {
       createLocalPlayer();
     }
 
+
     toast(
-      "Online unavailable — Local demo mode"
+      "Firebase not connected — local demo mode"
     );
-  } finally {
-    state.firebaseStarting =
-      false;
+
   }
+
 }
 
-/* =========================================================
-   REALTIME LISTENER
-   ========================================================= */
 
-function listenWorld() {
+/* =========================================================
+   FIREBASE PLAYER
+========================================================= */
+
+async function uploadCurrentPlayer() {
+
   if (
-    state.localDemo ||
-    !state.firebase ||
-    !state.me
+    !state.firebase
+    || !state.me
   ) {
     return;
   }
+
+
+  const {
+    db,
+    ref,
+    set,
+    onDisconnect
+  } = state.firebase;
+
+
+  const playerRef =
+    ref(
+      db,
+      `worlds/${state.world}/players/${state.me.uid}`
+    );
+
+
+  await set(
+    playerRef,
+    state.me
+  );
+
+
+  try {
+    await onDisconnect(
+      playerRef
+    ).remove();
+  } catch (error) {
+    console.warn(
+      "onDisconnect failed:",
+      error
+    );
+  }
+
+}
+
+
+/* =========================================================
+   FIREBASE LISTENERS
+========================================================= */
+
+function listenWorld() {
+
+  if (!state.firebase) {
+    return;
+  }
+
 
   const {
     db,
@@ -2933,9 +3185,6 @@ function listenWorld() {
     onValue
   } = state.firebase;
 
-  /* -----------------------------------------
-     Players
-     ----------------------------------------- */
 
   onValue(
     ref(
@@ -2943,38 +3192,31 @@ function listenWorld() {
       `worlds/${state.world}/players`
     ),
     (snapshot) => {
-      const data =
-        snapshot.val() || {};
 
       state.players =
-        data;
+        snapshot.val() || {};
+
 
       if (
-        state.me &&
-        state.me.uid &&
-        state.players[state.me.uid]
+        state.me
+        && state.players[state.me.uid]
       ) {
+
         state.me =
           state.players[
             state.me.uid
           ];
+
       }
+
 
       updateCounts();
 
       renderPlayers();
-    },
-    (error) => {
-      console.warn(
-        "Player listener error:",
-        error
-      );
+
     }
   );
 
-  /* -----------------------------------------
-     Chat
-     ----------------------------------------- */
 
   onValue(
     ref(
@@ -2982,35 +3224,40 @@ function listenWorld() {
       `worlds/${state.world}/chat`
     ),
     (snapshot) => {
+
       const data =
         snapshot.val() || {};
+
 
       state.chat =
         Object.values(data)
           .sort(
             (a, b) =>
-              (a.timestamp || 0) -
+              (a.timestamp || 0)
+              -
               (b.timestamp || 0)
           )
           .slice(-40);
 
+
       renderChat();
-    },
-    (error) => {
-      console.warn(
-        "Chat listener error:",
-        error
-      );
+
     }
   );
+
 }
+
 
 /* =========================================================
    WRITE PLAYER
-   ========================================================= */
+========================================================= */
 
 async function writePlayer() {
-  if (!state.me) return;
+
+  if (!state.me) {
+    return;
+  }
+
 
   state.me.lastSeen =
     Date.now();
@@ -3018,30 +3265,31 @@ async function writePlayer() {
   state.me.online =
     true;
 
+
   state.players[
     state.me.uid
   ] = state.me;
 
+
   updateCounts();
 
-  /*
-    Local mode:
-    no Firebase write.
-  */
 
   if (
-    state.localDemo ||
-    !state.firebase
+    state.localDemo
+    || !state.firebase
   ) {
     return;
   }
 
+
   try {
+
     const {
       db,
       ref,
       set
     } = state.firebase;
+
 
     await set(
       ref(
@@ -3050,49 +3298,62 @@ async function writePlayer() {
       ),
       state.me
     );
+
   } catch (error) {
+
     console.warn(
       "Could not update player:",
       error
     );
+
   }
+
 }
+
 
 /* =========================================================
    CHAT
-   ========================================================= */
+========================================================= */
 
 async function sendChat(text) {
+
   text =
     String(text || "")
-      .trim()
-      .slice(0, 120);
+      .trim();
 
-  if (!text) return;
+
+  if (!text) {
+    return;
+  }
+
+
+  if (!state.me) {
+    createLocalPlayer();
+  }
+
 
   const message = {
+
     uid:
-      state.me?.uid ||
-      "local",
+      state.me?.uid
+      || "local",
 
     name:
-      state.config.name ||
-      "Mai",
+      state.config.name,
 
     text,
 
     timestamp:
       Date.now()
+
   };
 
-  /* -----------------------------------------
-     Local mode
-     ----------------------------------------- */
 
   if (
-    state.localDemo ||
-    !state.firebase
+    state.localDemo
+    || !state.firebase
   ) {
+
     state.chat = [
       ...state.chat,
       message
@@ -3101,19 +3362,19 @@ async function sendChat(text) {
     renderChat();
 
     return;
+
   }
 
-  /* -----------------------------------------
-     Firebase mode
-     ----------------------------------------- */
 
   try {
+
     const {
       db,
       ref,
       push,
       set
     } = state.firebase;
+
 
     const messageRef =
       push(
@@ -3123,61 +3384,60 @@ async function sendChat(text) {
         )
       );
 
+
     await set(
       messageRef,
       message
     );
+
   } catch (error) {
+
     console.warn(
-      "Chat send failed:",
+      "Could not send chat:",
       error
     );
 
-    /*
-      Show locally even if Firebase
-      temporarily fails.
-    */
-
-    state.chat = [
-      ...state.chat,
-      message
-    ].slice(-40);
-
-    renderChat();
   }
+
 }
 
+
 /* =========================================================
-   CHAT UI
-   ========================================================= */
+   CHAT RENDER
+========================================================= */
 
 function renderChat() {
+
   const log =
     $("#chatLog");
 
-  if (!log) return;
+  if (!log) {
+    return;
+  }
+
 
   log.innerHTML =
     state.chat
       .map(
         (message) => `
-          <div class="chat-msg ${
-            message.uid ===
-            state.me?.uid
-              ? "me"
-              : ""
-          }">
+          <div
+            class="chat-msg ${
+              message.uid === state.me?.uid
+                ? "me"
+                : ""
+            }"
+          >
             <b>
               ${escapeHTML(
-                message.name ||
-                  "Mai"
+                message.name || "Mai"
               )}
             </b>
+
             <br>
+
             <p>
               ${escapeHTML(
-                message.text ||
-                  ""
+                message.text || ""
               )}
             </p>
           </div>
@@ -3185,99 +3445,114 @@ function renderChat() {
       )
       .join("");
 
+
   log.scrollTop =
     log.scrollHeight;
+
 }
 
+
 /* =========================================================
-   PLAYER LIST
-   ========================================================= */
+   PLAYERS LIST
+========================================================= */
 
 function renderPlayers() {
+
   const list =
     $("#playerList");
 
-  if (!list) return;
+  if (!list) {
+    return;
+  }
+
 
   const players =
     Object.values(
-      state.players || {}
+      state.players
     );
+
 
   list.innerHTML =
     players
       .map(
         (player) => `
-          <div class="player-chip">
+          <div
+            class="player-chip"
+          >
             <canvas
               width="32"
               height="32"
-              data-pid="${escapeHTML(
-                player.uid
-              )}"
+              data-pid="${escapeHTML(player.uid)}"
             ></canvas>
+
             ${escapeHTML(
-              player.name ||
-                "Mai"
+              player.name || "Mai"
             )}
           </div>
         `
       )
       .join("");
 
-  players.forEach(
-    (player) => {
-      const canvas =
-        document.querySelector(
-          `[data-pid="${CSS.escape(
-            player.uid
-          )}"]`
-        );
 
-      if (canvas) {
-        drawAvatar(
-          canvas,
-          player,
-          0.35
-        );
-      }
+  players.forEach((player) => {
+
+    const canvas =
+      document.querySelector(
+        `[data-pid="${CSS.escape(player.uid)}"]`
+      );
+
+
+    if (canvas) {
+
+      drawAvatar(
+        canvas,
+        player,
+        0.35
+      );
+
     }
-  );
+
+  });
+
 }
+
 
 /* =========================================================
    FRIENDS
-   ========================================================= */
+========================================================= */
 
 function renderFriendsModal() {
-  const list =
+
+  const container =
     $("#friendsModalList");
 
-  if (!list) return;
+  if (!container) {
+    return;
+  }
+
 
   const players =
     Object.values(
-      state.players || {}
+      state.players
     );
 
-  list.innerHTML =
+
+  container.innerHTML =
     players
       .map(
         (player) => `
           <div class="friend-row">
+
             <canvas
               width="56"
               height="56"
-              data-fpid="${escapeHTML(
-                player.uid
-              )}"
+              data-fpid="${escapeHTML(player.uid)}"
             ></canvas>
 
             <div>
               <b>
                 ${escapeHTML(
-                  player.name ||
-                    "Mai"
+                  player.name || "Mai"
                 )}
               </b>
 
@@ -3285,100 +3560,125 @@ function renderFriendsModal() {
 
               <small>
                 ${
-                  player.uid ===
-                  state.me?.uid
+                  player.uid === state.me?.uid
                     ? "you"
-                    : "in " +
-                      escapeHTML(
-                        state.world
-                      )
+                    : "in " + escapeHTML(state.world)
                 }
               </small>
             </div>
 
             <button
               class="ghost"
-              onclick="window.wavePlayer('${escapeHTML(
-                player.uid
-              )}')"
+              data-wave="${escapeHTML(player.uid)}"
             >
               👋
             </button>
+
           </div>
         `
       )
       .join("");
 
-  players.forEach(
-    (player) => {
-      const canvas =
-        document.querySelector(
-          `[data-fpid="${CSS.escape(
-            player.uid
-          )}"]`
+
+  players.forEach((player) => {
+
+    const canvas =
+      document.querySelector(
+        `[data-fpid="${CSS.escape(player.uid)}"]`
+      );
+
+
+    if (canvas) {
+
+      drawAvatar(
+        canvas,
+        player,
+        0.55
+      );
+
+    }
+
+  });
+
+
+  container
+    .querySelectorAll("[data-wave]")
+    .forEach((button) => {
+
+      button.onclick = () => {
+
+        wavePlayer(
+          button.dataset.wave
         );
 
-      if (canvas) {
-        drawAvatar(
-          canvas,
-          player,
-          0.55
-        );
-      }
-    }
-  );
+      };
+
+    });
+
 }
 
-window.wavePlayer = (
-  playerId
-) => {
-  const player =
-    state.players[
-      playerId
-    ];
 
-  if (player) {
-    toast(
-      `You waved at ${player.name}! 👋`
-    );
+function wavePlayer(id) {
+
+  const player =
+    state.players[id];
+
+
+  if (!player) {
+    return;
   }
-};
+
+
+  toast(
+    `You waved at ${player.name || "Mai"}! 👋`
+  );
+
+}
+
 
 /* =========================================================
    COUNTERS
-   ========================================================= */
+========================================================= */
 
 function updateCounts() {
+
   const count =
     Object.values(
-      state.players || {}
+      state.players
     ).length;
+
 
   const onlineCount =
     $("#onlineCount");
-
-  const friendCount =
-    $("#friendCount");
 
   if (onlineCount) {
     onlineCount.textContent =
       count;
   }
 
+
+  const friendCount =
+    $("#friendCount");
+
   if (friendCount) {
+
     friendCount.textContent =
       Math.max(
         0,
         count - 1
       );
+
   }
+
 }
 
+
 /* =========================================================
-   MODALS
-   ========================================================= */
+   CONNECTION
+========================================================= */
 
 function setConnection(text) {
+
   const element =
     $("#connectionText");
 
@@ -3386,149 +3686,212 @@ function setConnection(text) {
     element.textContent =
       text;
   }
+
 }
 
+
+/* =========================================================
+   MODALS
+========================================================= */
+
 function openModal(id) {
+
   const modal =
     $("#" + id);
 
-  if (!modal) return;
+  if (!modal) {
+    return;
+  }
+
 
   modal.classList.remove(
     "hidden"
   );
 
-  previewEditor();
+
+  if (
+    id === "profileModal"
+  ) {
+    previewEditor();
+  }
+
 }
 
+
 function closeModal(id) {
+
   const modal =
     $("#" + id);
 
-  if (!modal) return;
+  if (!modal) {
+    return;
+  }
+
 
   modal.classList.add(
     "hidden"
   );
+
 }
+
 
 /* =========================================================
    TOAST
-   ========================================================= */
+========================================================= */
 
-function toast(message) {
+function toast(text) {
+
   const element =
     $("#toast");
 
-  if (!element) return;
+  if (!element) {
+    return;
+  }
+
 
   element.textContent =
-    message;
+    text;
+
 
   element.classList.add(
     "show"
   );
 
+
   clearTimeout(
     toast.timer
   );
 
+
   toast.timer =
     setTimeout(() => {
+
       element.classList.remove(
         "show"
       );
+
     }, 2400);
+
 }
+
 
 /* =========================================================
    ESCAPE HTML
-   ========================================================= */
+========================================================= */
 
 function escapeHTML(value) {
+
   return String(
     value ?? ""
   ).replace(
     /[&<>"']/g,
-    (character) =>
-      ({
-        "&": "&amp;",
-        "<": "&lt;",
-        ">": "&gt;",
-        '"': "&quot;",
-        "'": "&#039;"
-      }[character])
+    (character) => ({
+      "&": "&amp;",
+      "<": "&lt;",
+      ">": "&gt;",
+      '"': "&quot;",
+      "'": "&#039;"
+    }[character])
   );
+
 }
+
 
 /* =========================================================
    MUSIC
-   ========================================================= */
+========================================================= */
 
 let audioOn = false;
 
+
 function toggleMusic() {
+
   if (!state.audio) {
+
     const AudioContext =
-      window.AudioContext ||
-      window.webkitAudioContext;
+      window.AudioContext
+      || window.webkitAudioContext;
+
 
     if (!AudioContext) {
+
       toast(
         "Your browser does not support Web Audio"
       );
 
       return;
+
     }
+
 
     const audioContext =
       new AudioContext();
 
+
     const master =
       audioContext.createGain();
 
+
     master.gain.value =
       0.035;
+
 
     master.connect(
       audioContext.destination
     );
 
+
     state.audio = {
-      ac: audioContext,
+
+      ac:
+        audioContext,
+
       master
+
     };
+
   }
+
 
   const audio =
     state.audio;
 
+
   if (audioOn) {
+
     audio.master.gain.setTargetAtTime(
       0,
       audio.ac.currentTime,
       0.08
     );
 
+
     audioOn = false;
 
-    const musicButton =
+
+    const button =
       $("#musicBtn");
 
-    if (musicButton) {
-      musicButton.textContent =
+    if (button) {
+      button.textContent =
         "♫";
     }
 
+
     return;
+
   }
+
 
   if (
     audio.ac.state ===
     "suspended"
   ) {
+
     audio.ac.resume();
+
   }
+
 
   audio.master.gain.setTargetAtTime(
     0.035,
@@ -3536,15 +3899,18 @@ function toggleMusic() {
     0.08
   );
 
+
   audioOn = true;
 
-  const musicButton =
+
+  const button =
     $("#musicBtn");
 
-  if (musicButton) {
-    musicButton.textContent =
+  if (button) {
+    button.textContent =
       "❚❚";
   }
+
 
   const notes = [
     261.63,
@@ -3557,42 +3923,53 @@ function toggleMusic() {
     349.23
   ];
 
-  let index = 0;
+
+  let noteIndex = 0;
+
 
   const playNote = () => {
-    if (!audioOn) return;
+
+    if (!audioOn) {
+      return;
+    }
+
 
     const oscillator =
       audio.ac.createOscillator();
 
+
     const gain =
       audio.ac.createGain();
+
 
     oscillator.type =
       "sine";
 
+
     oscillator.frequency.value =
       notes[
-        index++ %
-          notes.length
+        noteIndex++ %
+        notes.length
       ];
+
 
     gain.gain.setValueAtTime(
       0,
       audio.ac.currentTime
     );
 
+
     gain.gain.linearRampToValueAtTime(
       0.7,
-      audio.ac.currentTime +
-        0.04
+      audio.ac.currentTime + 0.04
     );
+
 
     gain.gain.exponentialRampToValueAtTime(
       0.001,
-      audio.ac.currentTime +
-        1.1
+      audio.ac.currentTime + 1.1
     );
+
 
     oscillator.connect(
       gain
@@ -3602,87 +3979,29 @@ function toggleMusic() {
       audio.master
     );
 
+
     oscillator.start();
 
     oscillator.stop(
-      audio.ac.currentTime +
-        1.15
+      audio.ac.currentTime + 1.15
     );
+
 
     setTimeout(
       playNote,
       900
     );
+
   };
 
+
   playNote();
+
 }
 
-/* =========================================================
-   GLOBAL ERROR PROTECTION
-   ========================================================= */
-
-window.addEventListener(
-  "error",
-  (event) => {
-    console.error(
-      "MAIWORLD runtime error:",
-      event.error ||
-        event.message
-    );
-
-    /*
-      Never let an uncaught error
-      trap the user on the loading screen.
-    */
-
-    safeBootHide();
-  }
-);
-
-window.addEventListener(
-  "unhandledrejection",
-  (event) => {
-    console.error(
-      "MAIWORLD promise error:",
-      event.reason
-    );
-
-    safeBootHide();
-  }
-);
 
 /* =========================================================
    START
-   ========================================================= */
+========================================================= */
 
-init().catch((error) => {
-  console.error(
-    "MAIWORLD fatal initialization error:",
-    error
-  );
-
-  safeBootHide();
-
-  /*
-    Emergency fallback:
-    show the game even if initialization
-    has an unexpected error.
-  */
-
-  try {
-    if (!state.me) {
-      createLocalPlayer();
-    }
-
-    renderProfileEverywhere();
-    renderWorld();
-    drawHero();
-    requestAnimationFrame(loop);
-  } catch (fallbackError) {
-    console.error(
-      "MAIWORLD fallback failed:",
-      fallbackError
-    );
-  }
-});
+init();
