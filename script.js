@@ -3056,7 +3056,7 @@ document.addEventListener(
 
 if (
   document.readyState ===
-  "loading"
+  "maiworlD berhasil dimuat"
 ) {
   document.addEventListener(
     "DOMContentLoaded",
